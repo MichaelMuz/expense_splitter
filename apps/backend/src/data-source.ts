@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 import { DataSource } from 'typeorm';
-import { User } from './entities/User.js';
+import { Group, GroupMembership, User } from './entities/User.js';
 
 const { POSTGRES_PASSWORD, POSTGRES_DB } = process.env;
 
@@ -17,5 +17,5 @@ export const AppDataSource = new DataSource({
     database: POSTGRES_DB,
     synchronize: true,
     logging: true,
-    entities: [User],
+    entities: [User, Group, GroupMembership],
 });
