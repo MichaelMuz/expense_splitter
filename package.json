@@ -8,12 +8,12 @@
     "apps/*"
   ],
 "scripts": {
-    "db:start": "docker run --name expense-postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_USER=postgres -e POSTGRES_DB=expense_splitter -p 5432:5432 -d postgres:16 || docker start expense-postgres",
+    "db:start": "source .env && docker run --name expense-postgres -e POSTGRES_PASSWORD -e POSTGRES_DB -p 5432:5432 -d postgres:16 || docker start expense-postgres",
     "db:stop": "docker stop expense-postgres",
-    "backend": "npm --workspace apps/backend run dev",
-    "frontend": "npm --workspace apps/frontend run dev",
+    "backend": "source .env && npm --workspace apps/backend run dev",
+    "frontend": "source .env && npm --workspace apps/frontend run dev",
     "dev": "npm run db:start && npm run backend"
-  }
+  },
   "author": "",
   "license": "ISC",
   "devDependencies": {
