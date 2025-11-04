@@ -11,11 +11,20 @@ Expense Splitter App Workflow:
 6. Not now but crazy stretch goal: receipt OCR
 
 
-1. Simple Users table for now, contains user id, email, and password (don't encourage real passwords yet, just to start then sso)
-   - /login - get: see login page, post: login using existing creds
-2. Group table that has a group link id and some metadata about the group like when it was created
-   - Group Link table that has a user id column and a group they are in. Just two columns
-   - /groups/{user_id} get: get groups this user is in
-   - /groups post: add to new group using this link
-3. expenses table, expense id and info about expense - not sure how to do it yet bc need to keep track of who owes it etc
-   -
+1. Simple User table for now, contains user id, email, and password (don't encourage real passwords yet, just to start then sso)
+   - /api/auth/register - post: create new user account
+   - /api/auth/login - post: login using existing creds
+2. Group table that has a group id, name, invite_code (unique), and created_at
+   - GroupMembership table that has user_id, group_id, role (owner/member), and joined_at. This is the join table for the many-to-many relationship between users and groups.
+   - GET /api/users/:user_id/groups - get groups this user is in
+   - POST /api/groups - create new group (generates unique invite_code)
+   - POST /api/groups/:group_id/join - join group using invite_code in request body
+   - GET /api/groups/:group_id - get group details and members
+
+     don't do this yet need to handle percentages that autoupdate on updated totals
+3. Expenses table: expense_id, group_id, description, total_amount, paid_by_user_id, created_at
+   - ExpenseSplits table: split_id, expense_id, user_id, amount_owed, is_paid
+   - POST /api/groups/:group_id/expenses - create new expense with splits
+   - GET /api/groups/:group_id/expenses - get all expenses for a group
+   - GET /api/users/:user_id/balance - get how much user owes/is owed across all groups
+   - PATCH /api/expenses/:expense_id/splits/:split_id - mark a split as paid
