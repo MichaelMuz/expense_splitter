@@ -10,6 +10,8 @@ export class User {
 
     @Column('varchar', { unique: true })
     email!: string;
+
+    // no password for now
 }
 
 @Entity()
