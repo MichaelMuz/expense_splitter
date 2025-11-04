@@ -10,8 +10,8 @@
   "scripts": {
     "db:start": "set -a && . ./.env && podman run --name expense-postgres -e POSTGRES_PASSWORD -e POSTGRES_DB -p 5432:5432 -d docker.io/library/postgres:16 || podman start expense-postgres",
     "db:stop": "podman stop expense-postgres",
-    "backend": "source .env && npm --workspace apps/backend run dev",
-    "frontend": "source .env && npm --workspace apps/frontend run dev",
+    "backend": "set -a && . ./.env && npm --workspace apps/backend run dev",
+    "frontend": "set -a && . ./.env && npm --workspace apps/frontend run dev",
     "dev": "npm run db:start && npm run backend"
   },
   "author": "",
