@@ -1,0 +1,21 @@
+#+title: Readme
+
+
+Expense Splitter App Workflow:
+1. User signs up for site, they put in an email and password - maybe sso?
+2. User generates a 'group' link and they send it to people who can join the group
+3. All people in group can see all of their groups by most recent and add expenses to choose how they are split
+   - Can be a percentage or amount assigned per person or split evenly by a subset of the group
+4. Each person can see a running score of how much they owe to the group expense.
+5. Somehow handle tax and tip nicely (as portion of how much that person owes for the expense)
+6. Not now but crazy stretch goal: receipt OCR
+
+
+1. Simple Users table for now, contains user id, email, and password (don't encourage real passwords yet, just to start then sso)
+   - /login - get: see login page, post: login using existing creds
+2. Group table that has a group link id and some metadata about the group like when it was created
+   - Group Link table that has a user id column and a group they are in. Just two columns
+   - /groups/{user_id} get: get groups this user is in
+   - /groups post: add to new group using this link
+3. expenses table, expense id and info about expense - not sure how to do it yet bc need to keep track of who owes it etc
+   -
