@@ -4,7 +4,7 @@
   "type": "module",
   "description": "",
   "main": "index.js",
- "scripts": {
+  "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js"
@@ -16,6 +16,7 @@
     "@koa/router": "^14.0.0",
     "koa": "^3.1.1",
     "koa-bodyparser": "^4.4.1",
+    "koa-jwt": "^4.0.4",
     "pg": "^8.16.3",
     "reflect-metadata": "^0.2.2",
     "typeorm": "^0.3.27"

@@ -1,12 +1,8 @@
 import 'reflect-metadata';
 import { DataSource } from 'typeorm';
 import { Group, GroupMembership, User } from './entities/User.js';
+import { POSTGRES_DB, POSTGRES_PASSWORD } from './env-const.js';
 
-const { POSTGRES_PASSWORD, POSTGRES_DB } = process.env;
-
-if (!POSTGRES_PASSWORD || !POSTGRES_DB) {
-    throw new Error('Missing required environment variables');
-}
 
 export const AppDataSource = new DataSource({
     type: 'postgres',
