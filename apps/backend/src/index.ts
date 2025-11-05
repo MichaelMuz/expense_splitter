@@ -1,13 +1,13 @@
 import Koa from 'koa';
 import bodyParser from 'koa-bodyparser';
 import { AppDataSource } from './data-source.js';
-import userRouter from './routes/users.js';
+import authRouter from './routes/auth.js';
 
 const app = new Koa();
 
 app.use(bodyParser());
-app.use(userRouter.routes());
-app.use(userRouter.allowedMethods());
+app.use(authRouter.routes());
+app.use(authRouter.allowedMethods());
 
 AppDataSource.initialize()
     .then(() => {

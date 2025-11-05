@@ -1,21 +1,24 @@
 import Router from '@koa/router';
 import { AppDataSource } from '../data-source.js';
-import { User } from '../entities/User.js';
+import { GroupMembership} from '../entities/User.js';
 
-const router = new Router({ prefix: '/api/auth' });
-const userRepository = AppDataSource.getRepository(User);
+const router = new Router({ prefix: '/api/users' });
+const groupMembershipRepository = AppDataSource.getRepository(GroupMembership);
 
-router.get('/login', async (ctx) => {
-    const users = await userRepository.find();
-    ctx.body = users;
-});
+router.get('/:id/groups', async (ctx) => {
+    const userId = Number(ctx.params['id'])
+    if (isNaN(userId)) {
+        ctx.status = 400
+        ctx.body = { error: 'Invalid Id' }
+        return
+    }
+    const memberships = await groupMembershipRepository.find({
+        where: { userId },
+        relations: ['group']
+    })
+    const groups = memberships.map(m => m.group)
 
-router.post('/register', async (ctx) => {
-    const userData = ctx.request.body as { name: string; email: string }
-    const user = userRepository.create(userData);
-    await userRepository.save(user);
-    ctx.body = user;
-    ctx.status = 201;
-});
+    ctx.body = groups
+})
 
 export default router;

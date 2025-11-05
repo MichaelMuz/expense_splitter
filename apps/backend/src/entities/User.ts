@@ -33,10 +33,10 @@ export class Group {
 @Entity()
 export class GroupMembership {
     @PrimaryColumn()
-    UserId!: number;
+    userId!: number;
 
     @PrimaryColumn()
-    GroupId!: number;
+    groupId!: number;
 
     @Column('varchar')
     role!: string;
@@ -45,10 +45,8 @@ export class GroupMembership {
     joinedAt!: Date
 
     @ManyToOne(() => User, { onDelete: 'CASCADE' })
-    @JoinColumn({ name: 'user_id' })
     user!: User;
 
     @ManyToOne(() => Group, { onDelete: 'CASCADE' })
-    @JoinColumn({ name: 'group_id' })
     group!: Group;
 }
