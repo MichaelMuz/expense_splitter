@@ -38,7 +38,7 @@ router.post('/', async (ctx) => {
         return;
     }
 
-    const group = groupRepository.create({name:groupName})
+    const group = groupRepository.create({ name: groupName })
     await groupRepository.save(group)
 
     const groupMembership = groupMembershipRepository.create({ userId, groupId: group.id, role: 'admin' })
@@ -50,6 +50,32 @@ router.post('/', async (ctx) => {
         group: group,
         membership: groupMembership
     };
+})
+
+// in the future this will be api/groups/:id/members and a put/post with no body, will validate against invite table
+router.post('/join', async (ctx) => {
+    const userId = Number(ctx.state['user']['id'])
+    if (isNaN(userId)) {
+        ctx.status = 500
+        // Impossible state
+        ctx.body = { error: 'Internal Error' }
+        return
+    }
+    const { inviteCode } = ctx.request.body as { inviteCode: string }
+    if (!inviteCode || typeof inviteCode !== 'string' || inviteCode.trim().length === 0) {
+        ctx.status = 400;
+        ctx.body = { error: 'Invite code is required.' };
+        return;
+    }
+    const group = await groupRepository.findOne({ where: { inviteCode: inviteCode.trim() } })
+    if (!group) {
+        ctx.status = 404
+        // Impossible state
+        ctx.body = { error: 'Invalid invite code' }
+        return
+    }
+    const membership = groupMembershipRepository.create({ userId, groupId: group.id, role: 'member' })
+    await groupMembershipRepository.save(membership)
 })
 
 export default router;
