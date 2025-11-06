@@ -1,4 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column, Generated, CreateDateColumn, PrimaryColumn, ManyToOne } from 'typeorm';
+import { User } from './User.js';
 @Entity()
 export class Group {
     @PrimaryGeneratedColumn()
