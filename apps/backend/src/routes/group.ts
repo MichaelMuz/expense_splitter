@@ -70,12 +70,63 @@ router.post('/join', async (ctx) => {
     const group = await groupRepository.findOne({ where: { inviteCode: inviteCode.trim() } })
     if (!group) {
         ctx.status = 404
-        // Impossible state
         ctx.body = { error: 'Invalid invite code' }
         return
     }
     const membership = groupMembershipRepository.create({ userId, groupId: group.id, role: 'member' })
     await groupMembershipRepository.save(membership)
+})
+
+router.get('/:id', async ctx => {
+    const userId = Number(ctx.state['user']['id'])
+    if (isNaN(userId)) {
+        ctx.status = 500
+        // Impossible state
+        ctx.body = { error: 'Internal Error' }
+        return
+    }
+    const groupId = Number(ctx.params['id'])
+    if (isNaN(groupId)) {
+        ctx.status = 400
+        ctx.body = { error: 'Group id required' }
+        return
+    }
+
+    const members = await groupMembershipRepository.find(
+        { where: { groupId }, relations: ['group', 'user'] }
+    )
+    if (members.length === 0) {
+        ctx.status = 404
+        ctx.body = { error: 'User not part of group or group does not exist' }
+        return
+    }
+
+    const membership = members.find(m => m.userId === userId)
+    if (!membership) {
+        ctx.status = 404
+        ctx.body = { error: 'User not part of group or group does not exist' }
+        return
+    }
+    const group = membership.group
+
+    ctx.body = {
+        id: groupId,
+        name: group.name,
+        inviteCode: group.inviteCode,
+        createdAt: group.createdAt,
+        members: members.map(m => ({
+            id: m.user.id,
+            name: m.user.name,
+            email: m.user.email,
+            role: m.role,
+            joinedAt: m.joinedAt,
+            // later balance per user
+        }))
+        // total group expenses
+        // my balance
+        // all expenses from most recent
+    }
+
 })
 
 export default router;
