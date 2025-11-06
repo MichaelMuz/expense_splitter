@@ -28,3 +28,15 @@ Expense Splitter App Workflow:
    - GET /api/groups/:group_id/expenses - get all expenses for a group
    - GET /api/users/:user_id/balance - get how much user owes/is owed across all groups
    - PATCH /api/expenses/:expense_id/splits/:split_id - mark a split as paid
+
+Expenses table: expense_id, group_id, description, total_amount, paid_by_user_id, created_at
+Expense split table needs to support:
+1. Even split with group - easiest
+2. Specific dollar amount assigned to each person
+3. Specific percentage amount assigned to each person
+4. Ability to do these but not include everyone in the group, like only me jack and jill split this
+
+Expenses table:
+expense_id, group_id, description, total_amount, paid_by_user_id, split_type (fixed or percentage) created_at
+ExpenseSplit:
+expense_id, user_id, paid (Y/N)

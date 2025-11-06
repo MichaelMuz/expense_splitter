@@ -1,6 +1,6 @@
 import Router from '@koa/router';
 import { AppDataSource } from '../data-source.js';
-import { Group, GroupMembership } from '../entities/User.js';
+import { Group, GroupMembership } from '../entities/Group.js';
 
 const router = new Router({ prefix: '/api/groups' });
 const groupMembershipRepository = AppDataSource.getRepository(GroupMembership);
