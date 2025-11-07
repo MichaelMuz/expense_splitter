@@ -125,4 +125,36 @@ router.put('/groups/:group_id/expenses/:expense_id', async (ctx) => {
     ctx.body = expense
 })
 
+router.delete('/groups/:group_id/expenses/:expense_id', async (ctx) => {
+    const userId = Number(ctx.state['user']['id'])
+    if (isNaN(userId)) {
+        ctx.status = 500
+        // Impossible state
+        ctx.body = { error: 'Internal Error' }
+        return
+    }
+    const groupId = Number(ctx.params['group_id'])
+    if (isNaN(groupId)) {
+        ctx.status = 400
+        ctx.body = { error: 'Group id required' }
+        return
+    }
+
+    const expenseId = Number(ctx.params['expense_id'])
+    if (isNaN(expenseId)) {
+        ctx.status = 400
+        ctx.body = { error: 'Expense id required' }
+        return
+    }
+
+    const delRes = await expenseRepository.delete({ id: expenseId, paidByUserId: userId, groupId })
+    if (!delRes.affected) {
+        ctx.status = 404
+        ctx.body = { error: 'Expense not found or you do not have permission to delete it' }
+        return
+    }
+
+    ctx.status = 204
+})
+
 export default router;
