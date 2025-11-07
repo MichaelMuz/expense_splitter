@@ -5,7 +5,8 @@
   "main": "index.js",
   "private": true,
   "workspaces": [
-    "apps/*"
+    "apps/*",
+    "lib"
   ],
   "scripts": {
     "db:start": "set -a && . ./.env && podman run --name expense-postgres -e POSTGRES_PASSWORD -e POSTGRES_DB -p 5432:5432 -d docker.io/library/postgres:16 || podman start expense-postgres",
