@@ -8,6 +8,7 @@ const groupMembershipRepository = AppDataSource.getRepository(GroupMembership);
 const groupRepository = AppDataSource.getRepository(Group);
 const expenseRepository = AppDataSource.getRepository(Expense);
 const expenseSplitRepository = AppDataSource.getRepository(ExpenseSplit);
+import type { CreateExpenseRequest, SplitIntent } from 'lib'
 
 router.get("/groups/:group_id/expenses", async (ctx) => {
     const userId = Number(ctx.state["user"]["id"]);
