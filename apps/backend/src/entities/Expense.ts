@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, PrimaryColumn, ManyToOne } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, PrimaryColumn, ManyToOne} from 'typeorm';
 import { User } from './User.js';
 import { Group } from './Group.js';
 
@@ -7,11 +7,11 @@ export class Expense {
     @PrimaryGeneratedColumn()
     id!: number
 
-    @ManyToOne(() => User, { onDelete: 'CASCADE' })
-    paidByUser!: User;
+    @Column('int')
+    paidByUserId!: number;
 
-    @ManyToOne(() => Group, { onDelete: 'CASCADE' })
-    group!: Group;
+    @Column('int')
+    groupId!: number;
 
     @Column('varchar')
     description!: string;
@@ -25,6 +25,11 @@ export class Expense {
     @CreateDateColumn({ type: 'timestamptz' })
     createdAt!: Date
 
+    @ManyToOne(() => User, { onDelete: 'CASCADE' })
+    paidByUser!: User;
+
+    @ManyToOne(() => Group, { onDelete: 'CASCADE' })
+    group!: Group;
 }
 
 
