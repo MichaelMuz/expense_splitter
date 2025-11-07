@@ -37,6 +37,6 @@ Expense split table needs to support:
 4. Ability to do these but not include everyone in the group, like only me jack and jill split this
 
 Expenses table:
-expense_id, group_id, description, total_amount, paid_by_user_id, split_type (fixed or percentage) created_at
+expense_id, group_id, description, total_amount, paid_by_user_id,  created_at
 ExpenseSplit:
-expense_id, user_id, paid (Y/N)
+expense_id, user_id,  amount_owed, paid (Y/N)

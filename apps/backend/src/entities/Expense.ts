@@ -1,35 +1,30 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, PrimaryColumn, ManyToOne } from 'typeorm';
 import { User } from './User.js';
+import { Group } from './Group.js';
 
 @Entity()
 export class Expense {
     @PrimaryGeneratedColumn()
     id!: number
 
-    // should this be in expense or expense split? Prob here
-    @PrimaryColumn()
-    groupId!: number;
+    @ManyToOne(() => User, { onDelete: 'CASCADE' })
+    paidByUser!: User;
+
+    @ManyToOne(() => Group, { onDelete: 'CASCADE' })
+    group!: Group;
 
     @Column('varchar')
     description!: string;
 
     @Column('int')
-    baseAmount!: number
+    amount!: number
 
     @Column('int')
-    tax!: number
-
-    @Column('int')
-    tip!: number
-
-    @ManyToOne(() => User, { onDelete: 'CASCADE' })
-    paidByUserId!: User;
-
-    @Column('string')
-    split_type!: string
+    fee!: number
 
     @CreateDateColumn({ type: 'timestamptz' })
     createdAt!: Date
+
 }
 
 
@@ -41,6 +36,15 @@ export class ExpenseSplit {
     @PrimaryColumn()
     userId!: number;
 
+    @Column('int')
+    amountOwed!: number
+
     @Column('bool')
     paid!: boolean
+
+    @ManyToOne(() => Expense, { onDelete: 'CASCADE' })
+    expense!: Expense;
+
+    @ManyToOne(() => User, { onDelete: 'CASCADE' })
+    user!: User;
 }
