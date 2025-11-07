@@ -8,7 +8,7 @@ const groupMembershipRepository = AppDataSource.getRepository(GroupMembership);
 const groupRepository = AppDataSource.getRepository(Group);
 const expenseRepository = AppDataSource.getRepository(Expense);
 const expenseSplitRepository = AppDataSource.getRepository(ExpenseSplit);
-import type { CreateExpenseRequest, SplitIntent } from 'lib'
+import type { ExpenseRequest, SplitIntent, ExpenseResponse } from 'lib'
 
 router.get("/groups/:group_id/expenses", async (ctx) => {
     const userId = Number(ctx.state["user"]["id"]);
@@ -34,10 +34,34 @@ router.get("/groups/:group_id/expenses", async (ctx) => {
     }
     const expenses = await expenseRepository.find({
         where: { groupId },
+        relations: ['paidByUser', 'splits', 'splits.user']
     });
 
-    ctx.body = expenses;
-});
+    const resp: ExpenseResponse[] = expenses.map(expense => ({
+        id: expense.id,
+        description: expense.description,
+        amount: expense.amount,
+        fee: expense.fee,
+        createdAt: expense.createdAt,
+        paidByUser: {
+            id: expense.paidByUser.id,
+            name: expense.paidByUser.name,
+            email: expense.paidByUser.email
+        },
+        splits: expense.splits.map(split => ({
+            userId: split.userId,
+            amountOwed: split.amountOwed,
+            paid: split.paid,
+            user: {
+                id: split.user.id,
+                name: split.user.name,
+                email: split.user.email
+            }
+        }))
+    }));
+    ctx.body = resp;
+})
+
 
 router.post("/groups/:group_id/expenses", async (ctx) => {
     const userId = Number(ctx.state["user"]["id"]);

@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, PrimaryColumn, ManyToOne} from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, PrimaryColumn, ManyToOne, OneToMany } from 'typeorm';
 import { User } from './User.js';
 import { Group } from './Group.js';
 
@@ -30,6 +30,9 @@ export class Expense {
 
     @ManyToOne(() => Group, { onDelete: 'CASCADE' })
     group!: Group;
+
+    @OneToMany(() => ExpenseSplit, expenseSplit => expenseSplit.expense)
+    splits!: ExpenseSplit[];
 }
 
 
