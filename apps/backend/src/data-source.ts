@@ -3,6 +3,7 @@ import { DataSource } from 'typeorm';
 import { User } from './entities/User.js';
 import { POSTGRES_DB, POSTGRES_PASSWORD } from './env-const.js';
 import { Group, GroupMembership } from './entities/Group.js';
+import { Expense, ExpenseSplit } from './entities/Expense.js';
 
 
 export const AppDataSource = new DataSource({
@@ -14,5 +15,5 @@ export const AppDataSource = new DataSource({
     database: POSTGRES_DB,
     synchronize: true,
     logging: true,
-    entities: [User, Group, GroupMembership],
+    entities: [User, Group, GroupMembership, Expense, ExpenseSplit],
 });
