@@ -16,9 +16,9 @@ export async function globalErrorHandler(ctx: Context, next: Next) {
     })
 }
 
-export async function userHydration(ctx: Context, next: Next) {
-    const userId = (ctx as JWTContext).state.user.id
-    const user = await userRepository.findOne({ where: { id: userId } })
+export async function userHydration(rawCtx: Context, next: Next) {
+    const ctx = (rawCtx as JWTContext)
+    const user = await userRepository.findOne({ where: { id: ctx.state.user.id } })
     if (!user) {
         ctx.status = 401;
         ctx.body = { error: 'User not found' };
@@ -27,32 +27,6 @@ export async function userHydration(ctx: Context, next: Next) {
     ctx.state.user = user;
     await next();
 }
-
-// export async function groupMembershipHydration(ctx: Context, next: Next) {
-//     const typedCtx = (ctx as AuthContext & { params: { group_id: string } })
-//     const user = typedCtx.state.user
-//     const groupId = Number(typedCtx.params.group_id)
-
-//     if (isNaN(groupId)) {
-//         ctx.status = 400;
-//         ctx.body = { error: 'Invalid group id' };
-//         return;
-//     }
-//     const membership = await groupMembershipRepository.findOne({
-//         where: {
-//             userId: user.id,
-//             groupId
-//         }
-//     });
-//     if (!membership) {
-//         ctx.status = 403;
-//         ctx.body = { error: 'User not part of group or group does not exist' };
-//         return;
-//     }
-
-//     ctx.state.groupMembership = membership;
-//     await next();
-// }
 
 
 export async function groupMembershipHydration(rawCtx: Context, next: Next) {

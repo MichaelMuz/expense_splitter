@@ -1,36 +1,16 @@
 import Router from '@koa/router';
 import { AppDataSource } from '../data-source.js';
 import { Group, GroupMembership } from '../entities/Group.js';
+import { groupMembershipHydration } from '../middleware.js';
+import type { AuthContext, GroupContext } from '../contexts.js';
 
 const router = new Router({ prefix: '/api/groups' });
 const groupMembershipRepository = AppDataSource.getRepository(GroupMembership);
 const groupRepository = AppDataSource.getRepository(Group);
 
-router.get('/', async (ctx) => {
-    const userId = Number(ctx.state['user']['id'])
-    if (isNaN(userId)) {
-        ctx.status = 500
-        // Impossible state
-        ctx.body = { error: 'Internal Error' }
-        return
-    }
-    const memberships = await groupMembershipRepository.find({
-        where: { userId },
-        relations: ['group']
-    })
-    const groups = memberships.map(m => m.group)
+router.post('/', async (rawCtx) => {
+    const ctx = rawCtx as AuthContext;
 
-    ctx.body = groups
-})
-
-router.post('/', async (ctx) => {
-    const userId = Number(ctx.state['user']['id'])
-    if (isNaN(userId)) {
-        ctx.status = 500
-        // Impossible state
-        ctx.body = { error: 'Internal Error' }
-        return
-    }
     const { name: groupName } = ctx.request.body as { name: string }
     if (!groupName || typeof groupName !== 'string' || groupName.trim().length === 0) {
         ctx.status = 400;
@@ -38,79 +18,82 @@ router.post('/', async (ctx) => {
         return;
     }
 
-    const group = groupRepository.create({ name: groupName })
-    await groupRepository.save(group)
+    const result = await AppDataSource.transaction(async (entityManager) => {
+        const group = entityManager.create(Group, { name: groupName });
+        await entityManager.save(group);
 
-    const groupMembership = groupMembershipRepository.create({ userId, groupId: group.id, role: 'admin' })
-    await groupMembershipRepository.save(groupMembership)
+        const groupMembership = entityManager.create(GroupMembership, {
+            userId: ctx.state.user.id,
+            groupId: group.id,
+            role: 'admin'
+        });
+        await entityManager.save(groupMembership);
+
+        return { group, membership: groupMembership };
+    });
 
     ctx.status = 201
     ctx.body = {
         message: 'Group created successfully',
-        group: group,
-        membership: groupMembership
+        group: result.group,
+        membership: result.membership
     };
 })
 
+
+router.get('/', async (rawCtx) => {
+    const ctx = rawCtx as AuthContext
+    const memberships = await groupMembershipRepository.find({
+        where: { userId: ctx.state.user.id },
+        relations: ['group']
+    })
+    const groups = memberships.map(m => m.group)
+
+    ctx.body = groups
+})
+
+
 // in the future this will be api/groups/:id/members and a put/post with no body, will validate against invite table
-router.post('/join', async (ctx) => {
-    const userId = Number(ctx.state['user']['id'])
-    if (isNaN(userId)) {
-        ctx.status = 500
-        // Impossible state
-        ctx.body = { error: 'Internal Error' }
-        return
-    }
+router.post('/join', async (rawCtx) => {
+    const ctx = rawCtx as AuthContext
     const { inviteCode } = ctx.request.body as { inviteCode: string }
     if (!inviteCode || typeof inviteCode !== 'string' || inviteCode.trim().length === 0) {
         ctx.status = 400;
         ctx.body = { error: 'Invite code is required.' };
         return;
     }
+
     const group = await groupRepository.findOne({ where: { inviteCode: inviteCode.trim() } })
     if (!group) {
         ctx.status = 404
         ctx.body = { error: 'Invalid invite code' }
         return
     }
-    const membership = groupMembershipRepository.create({ userId, groupId: group.id, role: 'member' })
+
+    const existingMembership = await groupMembershipRepository.findOne({
+        where: { userId: ctx.state.user.id, groupId: group.id }
+    });
+    if (existingMembership) {
+        ctx.status = 400;
+        ctx.body = { error: 'Already a member of this group' };
+        return;
+    }
+    const membership = groupMembershipRepository.create({ userId: ctx.state.user.id, groupId: group.id, role: 'member' })
     await groupMembershipRepository.save(membership)
 })
 
-router.get('/:id', async ctx => {
-    const userId = Number(ctx.state['user']['id'])
-    if (isNaN(userId)) {
-        ctx.status = 500
-        // Impossible state
-        ctx.body = { error: 'Internal Error' }
-        return
-    }
-    const groupId = Number(ctx.params['id'])
-    if (isNaN(groupId)) {
-        ctx.status = 400
-        ctx.body = { error: 'Group id required' }
-        return
-    }
+router.use('/:group_id', groupMembershipHydration)
+
+router.get('', async rawCtx => {
+    const ctx = rawCtx as GroupContext
 
     const members = await groupMembershipRepository.find(
-        { where: { groupId }, relations: ['group', 'user'] }
+        { where: { groupId: ctx.state.groupMembership.groupId }, relations: ['group', 'user'] }
     )
-    if (members.length === 0) {
-        ctx.status = 404
-        ctx.body = { error: 'User not part of group or group does not exist' }
-        return
-    }
-
-    const membership = members.find(m => m.userId === userId)
-    if (!membership) {
-        ctx.status = 404
-        ctx.body = { error: 'User not part of group or group does not exist' }
-        return
-    }
-    const group = membership.group
+    const group = ctx.state.groupMembership.group
 
     ctx.body = {
-        id: groupId,
+        id: group.id,
         name: group.name,
         inviteCode: group.inviteCode,
         createdAt: group.createdAt,
