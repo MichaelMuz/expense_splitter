@@ -4,8 +4,11 @@ import { Expense, ExpenseSplit } from "../entities/Expense.js";
 import type { ExpenseRequest, SplitIntent, ExpenseResponse } from 'lib'
 import { expenseHydration, groupMembershipHydration } from "../middleware.js";
 import type { ExpenseContext, GroupContext } from "../contexts.js";
+import { GroupMembership } from "../entities/Group.js";
+import { In } from "typeorm";
 
 const expenseRepository = AppDataSource.getRepository(Expense);
+const groupMembershipRepository = AppDataSource.getRepository(GroupMembership);
 
 function calcSplits(splitIntents: SplitIntent[], amount: number, fee: number): Record<number, number> {
     const initialAmount = amount
@@ -82,7 +85,18 @@ router.post("/", async (rawCtx) => {
     const groupId = ctx.state.groupMembership.groupId
     const expenseRequest = ctx.request.body as ExpenseRequest
     const idToAmount = calcSplits(expenseRequest.splits, expenseRequest.amount, expenseRequest.fee)
-    // still need to check to make sure that the users assigned to pay are all in the group
+    const memberCount = await groupMembershipRepository.count({
+        where: {
+            groupId,
+            userId: In(Object.keys(idToAmount))
+        }
+    });
+
+    if (memberCount !== expenseRequest.splits.length) {
+        ctx.status = 400;
+        ctx.body = { error: 'All users in the split must be members of the group' };
+        return;
+    }
     try {
         const expenseId = await AppDataSource.transaction(async entityManager => {
             const expense = entityManager.create(Expense, {
@@ -178,7 +192,7 @@ router.put("/:expense_id", async (rawCtx) => {
     ctx.body = expense;
 });
 
-router.delete(":expense_id", async (rawCtx) => {
+router.delete("/:expense_id", async (rawCtx) => {
     const ctx = rawCtx as ExpenseContext
     const expense = ctx.state.expense
 
