@@ -80,17 +80,23 @@ router.post('/join', async (rawCtx) => {
     }
     const membership = groupMembershipRepository.create({ userId: ctx.state.user.id, groupId: group.id, role: 'member' })
     await groupMembershipRepository.save(membership)
+    ctx.status = 201;
+    ctx.body = {
+        message: 'Successfully joined group',
+        group,
+        membership
+    };
 })
 
 router.use('/:group_id', groupMembershipHydration)
 
-router.get('', async rawCtx => {
+router.get('/:group_id', async rawCtx => {
     const ctx = rawCtx as GroupContext
+    const group = ctx.state.groupMembership.group
 
     const members = await groupMembershipRepository.find(
-        { where: { groupId: ctx.state.groupMembership.groupId }, relations: ['group', 'user'] }
+        { where: { groupId: group.id }, relations: ['user'] }
     )
-    const group = ctx.state.groupMembership.group
 
     ctx.body = {
         id: group.id,
