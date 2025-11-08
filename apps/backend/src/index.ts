@@ -5,20 +5,15 @@ import { AppDataSource } from './data-source.js';
 import authRouter from './routes/auth.js';
 import groupRouter from './routes/group.js';
 import { JWT_SECRET } from './env-const.js';
+import { globalErrorHandler } from './middleware.js';
 
 const app = new Koa();
 
-app.use(async function (ctx, next) {
-    return next().catch((err) => {
-        if (401 == err.status) {
-                ctx.body = { error: "Unauthorized", message: "Token required" };
-        } else {
-            throw err;
-        }
-    });
-});
+app.use(globalErrorHandler);
 
 app.use(bodyParser());
+// use koa logger
+// app.use(logger())
 
 app.use(authRouter.routes());
 app.use(authRouter.allowedMethods());
