@@ -5,7 +5,7 @@ export type SplitIntent =
 
 export type ExpenseRequest = {
     description: string;
-    baseAmount: number;
+    amount: number;
     fee: number;
     splits: SplitIntent[];
 };
