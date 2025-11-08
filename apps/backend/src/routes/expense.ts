@@ -120,6 +120,7 @@ router.post("/groups/:group_id/expenses", async (ctx) => {
     }
     const expenseRequest = ctx.request.body as ExpenseRequest
     const idToAmount = calcSplits(expenseRequest.splits, expenseRequest.amount, expenseRequest.fee)
+    // still need to check to make sure that the users assigned to pay are all in the group
     try {
         const expenseId = await AppDataSource.transaction(async entityManager => {
             const expense = entityManager.create(Expense, {
