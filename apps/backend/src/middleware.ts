@@ -1,11 +1,13 @@
 import type { Context, Next } from "koa";
 import { AppDataSource } from "./data-source.js";
 import { User } from "./entities/User.js";
-import type { AuthContext, JWTContext } from "./contexts.js";
+import type { AuthContext, GroupContext, JWTContext } from "./contexts.js";
 import { GroupMembership } from "./entities/Group.js";
+import { Expense } from "./entities/Expense.js";
 
 const userRepository = AppDataSource.getRepository(User);
 const groupMembershipRepository = AppDataSource.getRepository(GroupMembership);
+const expenseRepository = AppDataSource.getRepository(Expense);
 
 
 export async function globalErrorHandler(ctx: Context, next: Next) {
@@ -28,6 +30,32 @@ export async function userHydration(rawCtx: Context, next: Next) {
     await next();
 }
 
+
+export async function expenseHydration(rawCtx: Context, next: Next) {
+    const ctx = (rawCtx as GroupContext & { params: { expense_id: string } })
+    const expenseId = Number(ctx.params.expense_id)
+
+    if (isNaN(expenseId)) {
+        ctx.status = 400;
+        ctx.body = { error: 'Invalid group id' };
+        return;
+    }
+    const expense = await expenseRepository.findOne({
+        where: {
+            id: expenseId,
+            paidByUserId: ctx.state.user.id,
+            groupId: ctx.state.groupMembership.groupId
+        }
+    });
+    if (!expense) {
+        ctx.status = 403;
+        ctx.body = { error: 'User does not own expense or expense does not exist' };
+        return;
+    }
+
+    ctx.state.expense = expense
+    await next();
+}
 
 export async function groupMembershipHydration(rawCtx: Context, next: Next) {
     const ctx = (rawCtx as AuthContext & { params: { group_id: string } })

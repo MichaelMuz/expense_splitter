@@ -1,14 +1,11 @@
 import Router from "@koa/router";
 import { AppDataSource } from "../data-source.js";
-import { Group, GroupMembership } from "../entities/Group.js";
 import { Expense, ExpenseSplit } from "../entities/Expense.js";
-
-const router = new Router({ prefix: "/api" });
-const groupMembershipRepository = AppDataSource.getRepository(GroupMembership);
-const groupRepository = AppDataSource.getRepository(Group);
-const expenseRepository = AppDataSource.getRepository(Expense);
-const expenseSplitRepository = AppDataSource.getRepository(ExpenseSplit);
 import type { ExpenseRequest, SplitIntent, ExpenseResponse } from 'lib'
+import { expenseHydration, groupMembershipHydration } from "../middleware.js";
+import type { ExpenseContext, GroupContext } from "../contexts.js";
+
+const expenseRepository = AppDataSource.getRepository(Expense);
 
 function calcSplits(splitIntents: SplitIntent[], amount: number, fee: number): Record<number, number> {
     const initialAmount = amount
@@ -43,30 +40,13 @@ function calcSplits(splitIntents: SplitIntent[], amount: number, fee: number): R
     return idToAmount
 }
 
-router.get("/groups/:group_id/expenses", async (ctx) => {
-    const userId = Number(ctx.state["user"]["id"]);
-    if (isNaN(userId)) {
-        ctx.status = 500;
-        // Impossible state
-        ctx.body = { error: "Internal Error" };
-        return;
-    }
-    const groupId = Number(ctx.params["group_id"]);
-    if (isNaN(groupId)) {
-        ctx.status = 400;
-        ctx.body = { error: "Group id required" };
-        return;
-    }
-    const group = await groupMembershipRepository.findOne({
-        where: { userId, groupId },
-    });
-    if (!group) {
-        ctx.status = 403;
-        ctx.body = { error: "User not part of group or group does not exist" };
-        return;
-    }
+const router = new Router({ prefix: "/api/groups/:group_id/expenses" });
+router.use('/', groupMembershipHydration)
+
+router.get("/", async (rawCtx) => {
+    const ctx = rawCtx as GroupContext
     const expenses = await expenseRepository.find({
-        where: { groupId },
+        where: { groupId: ctx.state.groupMembership.groupId },
         relations: ['paidByUser', 'splits', 'splits.user']
     });
 
@@ -96,28 +76,10 @@ router.get("/groups/:group_id/expenses", async (ctx) => {
 })
 
 
-router.post("/groups/:group_id/expenses", async (ctx) => {
-    const userId = Number(ctx.state["user"]["id"]);
-    if (isNaN(userId)) {
-        ctx.status = 500;
-        // Impossible state
-        ctx.body = { error: "Internal Error" };
-        return;
-    }
-    const groupId = Number(ctx.params["group_id"]);
-    if (isNaN(groupId)) {
-        ctx.status = 400;
-        ctx.body = { error: "Group id required" };
-        return;
-    }
-    const group = await groupMembershipRepository.findOne({
-        where: { userId, groupId },
-    });
-    if (!group) {
-        ctx.status = 403;
-        ctx.body = { error: "User not part of group or group does not exist" };
-        return;
-    }
+router.post("/", async (rawCtx) => {
+    const ctx = rawCtx as GroupContext
+    const userId = ctx.state.user.id
+    const groupId = ctx.state.groupMembership.groupId
     const expenseRequest = ctx.request.body as ExpenseRequest
     const idToAmount = calcSplits(expenseRequest.splits, expenseRequest.amount, expenseRequest.fee)
     // still need to check to make sure that the users assigned to pay are all in the group
@@ -185,28 +147,11 @@ router.post("/groups/:group_id/expenses", async (ctx) => {
     }
 });
 
-router.put("/groups/:group_id/expenses/:expense_id", async (ctx) => {
-    const userId = Number(ctx.state["user"]["id"]);
-    if (isNaN(userId)) {
-        ctx.status = 500;
-        // Impossible state
-        ctx.body = { error: "Internal Error" };
-        return;
-    }
-    const groupId = Number(ctx.params["group_id"]);
-    if (isNaN(groupId)) {
-        ctx.status = 400;
-        ctx.body = { error: "Group id required" };
-        return;
-    }
+router.use('/:expense_id', expenseHydration)
 
-    const expenseId = Number(ctx.params["expense_id"]);
-    if (isNaN(expenseId)) {
-        ctx.status = 400;
-        ctx.body = { error: "Expense id required" };
-        return;
-    }
-
+router.put("/:expense_id", async (rawCtx) => {
+    const ctx = rawCtx as ExpenseContext
+    const expense = ctx.state.expense
     const { description, amount, fee } = ctx.request.body as {
         description: string;
         amount: number;
@@ -223,16 +168,6 @@ router.put("/groups/:group_id/expenses/:expense_id", async (ctx) => {
         return;
     }
 
-    const expense = await expenseRepository.findOne({
-        where: { id: expenseId, paidByUserId: userId, groupId },
-    });
-    if (!expense) {
-        ctx.status = 404;
-        ctx.body = {
-            error: "Expense not found or you do not have permission to edit it",
-        };
-        return;
-    }
 
     expense.description = description ?? expense.description;
     expense.amount = amount ?? expense.amount;
@@ -243,32 +178,14 @@ router.put("/groups/:group_id/expenses/:expense_id", async (ctx) => {
     ctx.body = expense;
 });
 
-router.delete("/groups/:group_id/expenses/:expense_id", async (ctx) => {
-    const userId = Number(ctx.state["user"]["id"]);
-    if (isNaN(userId)) {
-        ctx.status = 500;
-        // Impossible state
-        ctx.body = { error: "Internal Error" };
-        return;
-    }
-    const groupId = Number(ctx.params["group_id"]);
-    if (isNaN(groupId)) {
-        ctx.status = 400;
-        ctx.body = { error: "Group id required" };
-        return;
-    }
-
-    const expenseId = Number(ctx.params["expense_id"]);
-    if (isNaN(expenseId)) {
-        ctx.status = 400;
-        ctx.body = { error: "Expense id required" };
-        return;
-    }
+router.delete(":expense_id", async (rawCtx) => {
+    const ctx = rawCtx as ExpenseContext
+    const expense = ctx.state.expense
 
     const delRes = await expenseRepository.delete({
-        id: expenseId,
-        paidByUserId: userId,
-        groupId,
+        id: expense.id,
+        paidByUserId: expense.paidByUserId,
+        groupId: expense.groupId,
     });
     if (!delRes.affected) {
         ctx.status = 404;
