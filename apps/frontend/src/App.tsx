@@ -10,9 +10,17 @@ function App() {
     console.log('Submitted', { name, email })
 
     try {
-      const result = await fetch('https://api.restful-api.dev/objects')
+      const result = await fetch('http://localhost:3000/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/Json'
+        },
+        body: JSON.stringify({
+          name,
+          email
+        })
+      })
       const data = await result.json()
-
       setResponse(JSON.stringify(data, null, 2));
     } catch (error) {
       setResponse("Error")

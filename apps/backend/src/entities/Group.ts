@@ -18,10 +18,10 @@ export class Group {
 
 @Entity()
 export class GroupMembership {
-    @PrimaryColumn()
+    @PrimaryColumn('int')
     userId!: number;
 
-    @PrimaryColumn()
+    @PrimaryColumn('int')
     groupId!: number;
 
     @Column('varchar')

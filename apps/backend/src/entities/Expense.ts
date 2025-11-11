@@ -38,10 +38,10 @@ export class Expense {
 
 @Entity()
 export class ExpenseSplit {
-    @PrimaryColumn()
+    @PrimaryColumn('int')
     expenseId!: number;
 
-    @PrimaryColumn()
+    @PrimaryColumn('int')
     userId!: number;
 
     @Column('int')
