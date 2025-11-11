@@ -1,6 +1,8 @@
-import Koa from 'koa';
+import Koa  from 'koa';
 import jwt from 'koa-jwt';
 import bodyParser from 'koa-bodyparser';
+import cors from '@koa/cors';
+import logger from 'koa-logger';
 import { AppDataSource } from './data-source.js';
 import authRouter from './routes/auth.js';
 import groupRouter from './routes/group.js';
@@ -11,10 +13,10 @@ import { globalErrorHandler, userHydration } from './middleware.js';
 const app = new Koa();
 
 app.use(globalErrorHandler);
+app.use(logger())
+app.use(cors())
 
 app.use(bodyParser());
-// use koa logger
-// app.use(logger())
 
 app.use(authRouter.routes());
 app.use(authRouter.allowedMethods());
