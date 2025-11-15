@@ -1,10 +1,12 @@
-import { useState } from 'react'
 import './App.css'
 import RegisterPage from './pages/RegisterPage'
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import LoginPage from './pages/LoginPage'
 import LoginSuccessPage from './pages/LoginSuccessPage'
 import IndexPage from './pages/IndexPage'
+import LandingPage from './pages/LandingPage'
+import DashboardPage from './pages/DashboardPage'
+import CreateGroupPage from './pages/CreateGroupPage'
 
 function App() {
   return (
@@ -14,6 +16,9 @@ function App() {
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/success" element={<LoginSuccessPage />} />
+        <Route path="/landing" element={<LandingPage />} />
+        <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/create_group" element={<CreateGroupPage />} />
       </Routes>
     </BrowserRouter>
   )

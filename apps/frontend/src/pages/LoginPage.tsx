@@ -30,7 +30,7 @@ function LoginPage() {
             }
             const userData = await result.json() as LoginResponse
             setAuth(userData)
-            navigate('/success')
+            navigate('/dashboard')
         } catch (error) {
             setError("Networking Error. Try again")
         } finally {

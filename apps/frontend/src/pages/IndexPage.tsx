@@ -1,16 +1,16 @@
 import { useNavigate } from 'react-router-dom'
+import { isAuth } from '../utils/auth'
+import { useEffect } from 'react'
 
 function IndexPage() {
     const navigate = useNavigate()
-    return (
-        <>
-            <h2> Welcome </h2>
-            <br></br>
-            <button onClick={() => navigate('/register')}> Register </button>
-            <br></br>
-            <button onClick={() => navigate('/login')}> Login </button>
-        </>
-    )
+    useEffect(() => {
+        if (isAuth()) {
+            navigate('/dashboard')
+        } else {
+            navigate('/landing')
+        }
+    }, [navigate])
+    return <h2> Loading... </h2>
 }
-
 export default IndexPage
