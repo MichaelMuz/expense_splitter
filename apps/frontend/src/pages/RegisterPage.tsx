@@ -1,6 +1,9 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
+import type { RegisterResponse, RegisterRequest } from 'lib/route-types/auth-types.js';
+import { setAuth } from '../utils/auth';
+
 function RegisterPage() {
     const navigate = useNavigate()
     const [name, setName] = useState('')
@@ -21,10 +24,11 @@ function RegisterPage() {
                 body: JSON.stringify({
                     name,
                     email
-                })
+                } satisfies RegisterRequest)
             })
-            const userData = await result.json()
-            navigate('/login', {state: {userData}})
+            const userData = await result.json() as RegisterResponse
+            setAuth(userData)
+            navigate('/login')
         } catch (error) {
             setResponse("Error")
         } finally {

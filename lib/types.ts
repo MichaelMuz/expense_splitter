@@ -1,3 +1,8 @@
+export type User = {
+    id: number,
+    name: string,
+    email: string
+}
 export type SplitIntent =
     | { userId: number; type: "fixed"; value: number }
     | { userId: number; type: "percentage"; value: number }
