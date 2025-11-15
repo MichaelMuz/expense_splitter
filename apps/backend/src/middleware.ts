@@ -70,7 +70,8 @@ export async function groupMembershipHydration(rawCtx: Context, next: Next) {
         where: {
             userId: ctx.state.user.id,
             groupId
-        }
+        },
+        relations: ['group']
     });
     if (!membership) {
         ctx.status = 403;
