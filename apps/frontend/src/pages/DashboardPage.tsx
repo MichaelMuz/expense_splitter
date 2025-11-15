@@ -49,7 +49,7 @@ function DashboardPage() {
                     {groups.groups.map(group => (
                         <tr
                             key={group.id}
-                            onClick={() => navigate(`/groups/${group.id}`)}
+                            onClick={() => navigate(`/view_group/${group.id}`)}
                             style={{ cursor: 'pointer' }}
                             onMouseEnter={e => e.currentTarget.style.background = '#f0f0f0'}
                             onMouseLeave={e => e.currentTarget.style.background = 'white'}
