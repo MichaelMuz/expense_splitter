@@ -1,9 +1,7 @@
-import { useLocation } from 'react-router-dom'
+import { getAuth } from '../utils/auth'
 
 function LoginSuccessPage() {
-    const location = useLocation()
-    const userData = location.state?.userData
-    // const userData = JSON.parse(localStorage.getItem('auth'))
+    const userData = getAuth()
 
     return (
         <>

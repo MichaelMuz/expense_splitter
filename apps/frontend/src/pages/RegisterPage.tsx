@@ -1,19 +1,19 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-import type { RegisterResponse, RegisterRequest } from 'lib/route-types/auth-types.js';
-import { setAuth } from '../utils/auth';
+import type { RegisterRequest } from 'lib/route-types/auth-types.js';
 
 function RegisterPage() {
     const navigate = useNavigate()
     const [name, setName] = useState('')
     const [email, setEmail] = useState('')
-    const [response, setResponse] = useState('')
+    const [error, setError] = useState('')
     const [loading, setLoading] = useState(false)
 
     async function handleRegister() {
         console.log('Submitted', { name, email })
         setLoading(true)
+        setError('')
 
         try {
             const result = await fetch('http://localhost:3000/api/auth/register', {
@@ -26,11 +26,14 @@ function RegisterPage() {
                     email
                 } satisfies RegisterRequest)
             })
-            const userData = await result.json() as RegisterResponse
-            setAuth(userData)
+            if (!result.ok) {
+                const errorData = await result.json()
+                setError(errorData.error || 'Registration failed')
+                return
+            }
             navigate('/login')
         } catch (error) {
-            setResponse("Error")
+            setError("Networking Error. Try again")
         } finally {
             setLoading(false)
         }
@@ -43,6 +46,7 @@ function RegisterPage() {
         <>
             <div>
                 <h2> Register </h2>
+                {error && <p style={{ color: 'red' }}>{error}</p>}
                 <label> Name: </label>
                 <input type="text" value={name} onChange={n => setName(n.target.value)} />
                 <br></br>
@@ -51,7 +55,6 @@ function RegisterPage() {
                 <br></br>
                 <button onClick={handleRegister}> Submit </button>
             </div>
-            <h2> {response} </h2>
         </>
     )
 }

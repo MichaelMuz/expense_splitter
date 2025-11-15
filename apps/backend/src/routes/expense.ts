@@ -1,7 +1,7 @@
 import Router from "@koa/router";
 import { AppDataSource } from "../data-source.js";
 import { Expense, ExpenseSplit } from "../entities/Expense.js";
-import type { ExpenseRequest, SplitIntent, ExpenseResponse } from 'lib'
+import type { ExpenseRequest, SplitIntent, ExpenseResponse } from 'lib/route-types/expense-types.js'
 import { expenseHydration, groupMembershipHydration } from "../middleware.js";
 import type { ExpenseContext, GroupContext } from "../contexts.js";
 import { GroupMembership } from "../entities/Group.js";
