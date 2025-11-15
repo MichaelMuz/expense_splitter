@@ -33,35 +33,37 @@ function DashboardPage() {
     useEffect(() => { getGroups() }, [])
 
     let groupsJsx = <h2> Loading... </h2>
-if (groups !== undefined) {
-    groupsJsx = (
-        <table>
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Name</th>
-                    <th>Invite Code</th>
-                    <th>Created</th>
-                </tr>
-            </thead>
-
-            <tbody>
-                {groups.groups.map(group => (
-                    <tr
-                        key={group.id}
-                        style={{ cursor: 'pointer' }}
-                        onClick={() => navigate(`/groups/${group.id}`)}
-                    >
-                        <td>{group.id}</td>
-                        <td>{group.name}</td>
-                        <td>{group.inviteCode}</td>
-                        <td>{new Date(group.createdAt).toLocaleString()}</td>
+    if (groups !== undefined) {
+        groupsJsx = (
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Invite Code</th>
+                        <th>Created</th>
                     </tr>
-                ))}
-            </tbody>
-        </table>
-    )
-}
+                </thead>
+
+                <tbody>
+                    {groups.groups.map(group => (
+                        <tr
+                            key={group.id}
+                            onClick={() => navigate(`/groups/${group.id}`)}
+                            style={{ cursor: 'pointer' }}
+                            onMouseEnter={e => e.currentTarget.style.background = '#f0f0f0'}
+                            onMouseLeave={e => e.currentTarget.style.background = 'white'}
+                        >
+                            <td>{group.id}</td>
+                            <td>{group.name}</td>
+                            <td>{group.inviteCode}</td>
+                            <td>{new Date(group.createdAt).toLocaleString()}</td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+        )
+    }
 
     return (
         <>
