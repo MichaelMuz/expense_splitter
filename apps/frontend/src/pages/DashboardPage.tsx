@@ -69,6 +69,7 @@ function DashboardPage() {
         <>
             <h2> Dashboard </h2>
             <button onClick={() => { navigate('/create_group') }}> Create Group </button>
+            <button onClick={() => { navigate('/join_group') }}> Join Group </button>
             <h2> Groups </h2>
             {error && <p style={{ color: 'red' }}>{error}</p>}
             <br></br>

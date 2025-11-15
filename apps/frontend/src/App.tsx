@@ -8,6 +8,7 @@ import LandingPage from './pages/LandingPage'
 import DashboardPage from './pages/DashboardPage'
 import CreateGroupPage from './pages/CreateGroupPage'
 import ViewGroupPage from './pages/ViewGroupPage'
+import JoinGroupPage from './pages/JoinGroupPage'
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
         <Route path="/landing" element={<LandingPage />} />
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/create_group" element={<CreateGroupPage />} />
+        <Route path="/join_group" element={<JoinGroupPage />} />
         <Route path="/view_group/:id" element={<ViewGroupPage />} />
       </Routes>
     </BrowserRouter>
