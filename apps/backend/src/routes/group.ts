@@ -81,7 +81,6 @@ router.post('/join', async (rawCtx) => {
     ctx.body = { group } satisfies JoinGroupResponse;
 })
 
-// router.use('/:group_id', groupMembershipHydration)
 router.get('/:group_id',groupMembershipHydration, async rawCtx => {
     const ctx = rawCtx as GroupContext
     const group = ctx.state.groupMembership.group
