@@ -3,7 +3,7 @@ import { getAuth } from '../utils/auth'
 import type { CreateGroupRequest} from 'lib/route-types/group-types.js'
 import { useState } from 'react'
 
-function DashboardPage() {
+function CreateGroupPage() {
     const [groupName, setGroupName] = useState('')
     const [error, setError] = useState('')
 
@@ -50,4 +50,4 @@ function DashboardPage() {
     )
 }
 
-export default DashboardPage
+export default CreateGroupPage

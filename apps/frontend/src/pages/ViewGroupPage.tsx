@@ -3,48 +3,56 @@ import type { GetGroupResponse } from 'lib/route-types/group-types.js'
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 
-function DashboardPage() {
+function ViewGroupPage() {
     const [group, setGroup] = useState<GetGroupResponse>()
     const [error, setError] = useState('')
 
     const auth = getAuth()
+    const { id } = useParams()
 
-    const id = Number(useParams().id)
+    const groupId = Number(id)
+
     async function getGroupInfo() {
-        try {
-            if (isNaN(id)) {
-                setError("Invalid group number")
-                return
-            }
+        if (isNaN(groupId)) {
+            setError("Invalid group id")
+            return
+        }
 
-            const result = await fetch(`http://localhost:3000/api/groups/${id}`, {
+        try {
+            const result = await fetch(`http://localhost:3000/api/groups/${groupId}`, {
                 method: 'GET',
                 headers: {
-                    'Authorization': `Bearer ${auth.token}`
+                    'Authorization': `Bearer ${auth.token}`,
                 },
             })
 
             if (!result.ok) {
                 const errorData = await result.json()
-                setError(errorData.error || 'Failed to fetch groups')
+                setError(errorData.error || "Failed to fetch group info")
                 return
             }
-            const group = await result.json() as GetGroupResponse
-            setGroup(group)
+
+            const data = await result.json() as GetGroupResponse
+            setGroup(data)
+
         } catch {
             setError("Networking Error. Try again")
         }
     }
 
-    useEffect(() => { getGroupInfo() }, [])
+    useEffect(() => {
+        getGroupInfo()
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
 
-    let groupJsx = <h2> Loading... </h2>
-    if (group !== undefined) {
-        groupJsx = (
+    let content = <h2>Loading...</h2>
+
+    if (group) {
+        content = (
             <table>
                 <thead>
                     <tr>
-                        <th>Id</th>
+                        <th>User Id</th>
                         <th>Name</th>
                         <th>Email</th>
                         <th>Role</th>
@@ -54,9 +62,7 @@ function DashboardPage() {
 
                 <tbody>
                     {group.members.map(member => (
-                        <tr
-                            key={member.user.id}
-                        >
+                        <tr key={member.user.id}>
                             <td>{member.user.id}</td>
                             <td>{member.user.name}</td>
                             <td>{member.user.email}</td>
@@ -68,17 +74,16 @@ function DashboardPage() {
             </table>
         )
     }
+
     return (
-        <>
-            <div>
-                <h2> Group Info </h2>
-                {error && <p style={{ color: 'red' }}>{error}</p>}
-                <label> Group Member Details: </label>
-                <br></br>
-                {groupJsx}
-            </div>
-        </>
+        <div>
+            <h2>Group Info</h2>
+            {error && <p style={{ color: "red" }}>{error}</p>}
+            <label>Group Member Details:</label>
+            <br />
+            {content}
+        </div>
     )
 }
 
-export default DashboardPage
+export default ViewGroupPage
