@@ -80,7 +80,8 @@ function ViewGroupPage() {
         <div>
             <h2>Group Info</h2>
             {error && <p style={{ color: "red" }}>{error}</p>}
-{group && <h4>Invite Code: {group.group.inviteCode}</h4>}
+            {group && <h4>Group Name: {group.group.name}</h4>}
+            {group && <h4>Invite Code: {group.group.inviteCode}</h4>}
             <label>Group Member Details:</label>
             <br />
             {content}

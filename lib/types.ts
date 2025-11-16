@@ -11,3 +11,19 @@ export type Group = {
     createdAt: Date
 }
 
+export type Expense = {
+    id: number,
+    paidByUser: User,
+    groupId: number,
+    description: string,
+    amount: number,
+    fee: number,
+    createdAt: Date,
+}
+
+export type ExpenseSplit = {
+    // expenseId: number,
+    user: User,
+    amountOwed: number,
+    paid: boolean,
+}

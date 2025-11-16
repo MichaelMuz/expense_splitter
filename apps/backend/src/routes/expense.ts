@@ -1,7 +1,7 @@
 import Router from "@koa/router";
 import { AppDataSource } from "../data-source.js";
 import { Expense, ExpenseSplit } from "../entities/Expense.js";
-import type { ExpenseRequest, SplitIntent, ExpenseResponse } from 'lib/route-types/expense-types.js'
+import type { ExpenseRequest, SplitIntent, ExpenseResponse, GetExpensesResponse } from 'lib/route-types/expense-types.js'
 import { expenseHydration, groupMembershipHydration } from "../middleware.js";
 import type { ExpenseContext, GroupContext } from "../contexts.js";
 import { GroupMembership } from "../entities/Group.js";
@@ -75,7 +75,23 @@ router.get("/", async (rawCtx) => {
             }
         }))
     }));
-    ctx.body = resp;
+    ctx.body = {
+        expenses: expenses.map(expense => ({
+            id: expense.id,
+            paidByUser: expense.paidByUser,
+            groupId: expense.groupId,
+            description: expense.description,
+            amount: expense.amount,
+            fee: expense.fee,
+            createdAt: expense.createdAt,
+            splits: expense.splits.map(split => ({
+                user: split.user,
+                amountOwed: split.amountOwed,
+                paid: split.paid
+            } satisfies ExpenseSplit))
+        } satisfies Expense))
+
+    } satisfies GetExpensesResponse;
 })
 
 

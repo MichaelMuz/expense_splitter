@@ -1,7 +1,17 @@
+import type { Expense, ExpenseSplit } from 'lib/types.js';
+
+export type GetExpensesResponse = {
+    expenses: {
+        expense: Expense,
+        splits: ExpenseSplit[]
+    }
+}
+
 export type SplitIntent =
     | { userId: number; type: "fixed"; value: number }
     | { userId: number; type: "percentage"; value: number }
     | { userId: number; type: "even_split" };
+
 
 export type ExpenseRequest = {
     description: string;
