@@ -1,0 +1,84 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+
+  // Relations
+  groupMemberships GroupMembership[]
+  paidExpenses     Expense[]         @relation("PaidByUser")
+  expenseSplits    ExpenseSplit[]
+
+  @@map("users")
+}
+
+model Group {
+  id         String   @id @default(uuid())
+  name       String
+  inviteCode String   @unique @default(uuid())
+  createdAt  DateTime @default(now())
+
+  // Relations
+  members  GroupMembership[]
+  expenses Expense[]
+
+  @@map("groups")
+}
+
+model GroupMembership {
+  userId   String
+  groupId  String
+  role     String   @default("member") // "owner" or "member"
+  joinedAt DateTime @default(now())
+
+  // Relations
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@id([userId, groupId])
+  @@map("group_memberships")
+}
+
+model Expense {
+  id          String   @id @default(uuid())
+  description String
+  amount      Float
+  fee         Float    @default(0)
+  paidByUserId String
+  groupId     String
+  createdAt   DateTime @default(now())
+
+  // Relations
+  paidBy User           @relation("PaidByUser", fields: [paidByUserId], references: [id], onDelete: Cascade)
+  group  Group          @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  splits ExpenseSplit[]
+
+  @@map("expenses")
+}
+
+model ExpenseSplit {
+  expenseId  String
+  userId     String
+  amountOwed Float
+  paid       Boolean  @default(false)
+
+  // Relations
+  expense Expense @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([expenseId, userId])
+  @@map("expense_splits")
+}
