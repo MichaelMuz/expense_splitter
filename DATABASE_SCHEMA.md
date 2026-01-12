@@ -16,33 +16,75 @@
 
 ### User
 
-Represents both real users (with accounts) and virtual people (offline participants).
+Represents the login account. One user can have multiple personas (GroupMembers) across different groups.
 
 ```prisma
 model User {
-  id              String   @id @default(uuid())
-  name            String
-  email           String?  @unique // Optional for virtual users
-  password        String?  // Optional for virtual users (hashed)
-  isVirtual       Boolean  @default(false)
-  claimedByUserId String?  // If virtual user was claimed by real user
-  createdAt       DateTime @default(now())
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String   // hashed
+  createdAt DateTime @default(now())
 
   // Relations
-  groupMemberships GroupMembership[]
-  paidExpenses     ExpensePayer[]    // Expenses this user paid for
-  owedExpenses     ExpenseOwer[]     // Expenses this user owes on
-  settlementsFrom  Settlement[]      @relation("SettlementFrom")
-  settlementsTo    Settlement[]      @relation("SettlementTo")
+  groupMembers GroupMember[] // All personas across groups
 
   @@map("users")
 }
 ```
 
 **Key Fields**:
-- `email` / `password`: Nullable for virtual users
-- `isVirtual`: Distinguishes real users from virtual people
-- `claimedByUserId`: Links virtual person to real user who claimed them
+- `email` / `password`: Login credentials (always required)
+- One user can appear as different names in different groups via GroupMember
+
+**Design Benefits**:
+- Clean separation: User = login, GroupMember = persona
+- No nullable credentials or boolean flags with weak invariants
+- Multiple personas: "Mike" in one group, "Michael" in another
+
+---
+
+### GroupMember
+
+Represents a person's identity/persona within a specific group. Can be a real user (linked to account) or a virtual person (no account).
+
+```prisma
+model GroupMember {
+  id        String   @id @default(uuid())
+  groupId   String
+  userId    String?  // null = virtual person, not-null = real user
+  name      String   // How they appear in THIS group
+  role      String   @default("member") // "owner" or "member"
+  joinedAt  DateTime @default(now())
+
+  // Relations
+  user             User?            @relation(fields: [userId], references: [id], onDelete: SetNull)
+  group            Group            @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  paidExpenses     ExpensePayer[]
+  owedExpenses     ExpenseOwer[]
+  settlementsFrom  Settlement[]     @relation("SettlementFrom")
+  settlementsTo    Settlement[]     @relation("SettlementTo")
+
+  @@unique([groupId, userId]) // Can't join same group twice
+  @@map("group_members")
+}
+```
+
+**Key Fields**:
+- `userId`: Nullable - presence determines if virtual or real
+  - `null` = virtual person (offline participant)
+  - `not-null` = real user (has account)
+- `name`: Display name in this specific group
+- `@@unique([groupId, userId])`: Prevents duplicate joins
+
+**Virtual Person Flow**:
+1. Create GroupMember with `userId = null`, `name = "John"`
+2. When John joins via invite link, just set `userId = <their-account-id>`
+3. No data migration needed!
+
+**Design Benefits**:
+- Enforced invariants: virtual people CAN'T have passwords (database-level)
+- Simple claiming: just update userId field
+- Multiple personas: same User appears with different names in different groups
 
 ---
 
@@ -58,7 +100,7 @@ model Group {
   createdAt  DateTime @default(now())
 
   // Relations
-  members     GroupMembership[]
+  members     GroupMember[]
   expenses    Expense[]
   settlements Settlement[]
 
@@ -71,28 +113,6 @@ model Group {
 
 ---
 
-### GroupMembership
-
-Junction table tracking who belongs to which groups.
-
-```prisma
-model GroupMembership {
-  userId   String
-  groupId  String
-  role     String   @default("member") // "owner" or "member"
-  joinedAt DateTime @default(now())
-
-  // Relations
-  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
-
-  @@id([userId, groupId])
-  @@map("group_memberships")
-}
-```
-
----
-
 ### Expense
 
 The core transaction record. Stores ONLY what the user entered, no calculations.
@@ -101,6 +121,7 @@ The core transaction record. Stores ONLY what the user entered, no calculations.
 model Expense {
   id          String   @id @default(uuid())
   groupId     String
+  name        String
   description String
 
   // Base amount (pre-tax/tip) - REQUIRED
@@ -148,16 +169,16 @@ Junction table: who paid for an expense and how their payment splits.
 
 ```prisma
 model ExpensePayer {
-  expenseId   String
-  userId      String
-  splitMethod SplitMethod
-  splitValue  Float?  // For FIXED ($) or PERCENTAGE (0-100), null for EVEN
+  expenseId     String
+  groupMemberId String
+  splitMethod   SplitMethod
+  splitValue    Float?  // For FIXED ($) or PERCENTAGE (0-100), null for EVEN
 
   // Relations
-  expense Expense @relation(fields: [expenseId], references: [id], onDelete: Cascade)
-  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expense     Expense     @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+  groupMember GroupMember @relation(fields: [groupMemberId], references: [id], onDelete: Cascade)
 
-  @@id([expenseId, userId])
+  @@id([expenseId, groupMemberId])
   @@map("expense_payers")
 }
 
@@ -169,6 +190,7 @@ enum SplitMethod {
 ```
 
 **Key Fields**:
+- `groupMemberId`: References the GroupMember (persona) who paid
 - `splitMethod`: How this payer's contribution is calculated
 - `splitValue`:
   - `null` for EVEN split
@@ -179,8 +201,8 @@ enum SplitMethod {
 ```javascript
 // Me pays 60%, Sarah pays 40%
 [
-  { userId: "me", splitMethod: "PERCENTAGE", splitValue: 60.0 },
-  { userId: "sarah", splitMethod: "PERCENTAGE", splitValue: 40.0 }
+  { groupMemberId: "member-me", splitMethod: "PERCENTAGE", splitValue: 60.0 },
+  { groupMemberId: "member-sarah", splitMethod: "PERCENTAGE", splitValue: 40.0 }
 ]
 
 // When displaying/editing: show exactly this
@@ -195,16 +217,16 @@ Junction table: who owes on an expense and how their debt splits.
 
 ```prisma
 model ExpenseOwer {
-  expenseId   String
-  userId      String
-  splitMethod SplitMethod
-  splitValue  Float?  // For FIXED ($) or PERCENTAGE (0-100), null for EVEN
+  expenseId     String
+  groupMemberId String
+  splitMethod   SplitMethod
+  splitValue    Float?  // For FIXED ($) or PERCENTAGE (0-100), null for EVEN
 
   // Relations
-  expense Expense @relation(fields: [expenseId], references: [id], onDelete: Cascade)
-  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expense     Expense     @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+  groupMember GroupMember @relation(fields: [groupMemberId], references: [id], onDelete: Cascade)
 
-  @@id([expenseId, userId])
+  @@id([expenseId, groupMemberId])
   @@map("expense_owers")
 }
 ```
@@ -215,8 +237,8 @@ model ExpenseOwer {
 ```javascript
 // Fixed amounts
 [
-  { userId: "alice", splitMethod: "FIXED", splitValue: 60.0 },
-  { userId: "bob", splitMethod: "FIXED", splitValue: 40.0 }
+  { groupMemberId: "member-alice", splitMethod: "FIXED", splitValue: 60.0 },
+  { groupMemberId: "member-bob", splitMethod: "FIXED", splitValue: 40.0 }
 ]
 
 // When displaying/editing: show "Alice: $60, Bob: $40"
@@ -239,27 +261,27 @@ Records when someone pays someone else to settle debts.
 
 ```prisma
 model Settlement {
-  id         String   @id @default(uuid())
-  groupId    String
-  fromUserId String   // Who paid
-  toUserId   String   // Who received
-  amount     Float    // How much was paid
-  paidAt     DateTime @default(now())
-  recordedBy String   // User who recorded this payment
+  id                String   @id @default(uuid())
+  groupId           String
+  fromGroupMemberId String   // Who paid
+  toGroupMemberId   String   // Who received
+  amount            Float    // How much was paid
+  paidAt            DateTime @default(now())
+  recordedBy        String   // GroupMemberId of who recorded this payment
 
   // Relations
-  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  from  User  @relation("SettlementFrom", fields: [fromUserId], references: [id], onDelete: Cascade)
-  to    User  @relation("SettlementTo", fields: [toUserId], references: [id], onDelete: Cascade)
+  group       Group       @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  fromMember  GroupMember @relation("SettlementFrom", fields: [fromGroupMemberId], references: [id], onDelete: Cascade)
+  toMember    GroupMember @relation("SettlementTo", fields: [toGroupMemberId], references: [id], onDelete: Cascade)
 
   @@map("settlements")
 }
 ```
 
 **Key Fields**:
-- `fromUserId` → `toUserId`: Direction of payment
+- `fromGroupMemberId` → `toGroupMemberId`: Direction of payment (between personas)
 - `amount`: How much was paid (concrete dollar amount)
-- `recordedBy`: Audit trail of who recorded this
+- `recordedBy`: GroupMemberId of who recorded this (audit trail)
 
 ---
 
@@ -288,22 +310,22 @@ function calculateTotalExpenseAmount(expense: Expense): number {
 ```typescript
 function calculatePayerAmounts(expense: Expense): Map<string, number> {
   const payers = expense.payers;
-  const results = new Map<string, number>();
+  const results = new Map<string, number>(); // groupMemberId -> amount paid
 
   if (payers.every(p => p.splitMethod === 'EVEN')) {
     // Even split
     const totalPaid = calculateTotalExpenseAmount(expense);
     const perPayer = totalPaid / payers.length;
-    payers.forEach(p => results.set(p.userId, perPayer));
+    payers.forEach(p => results.set(p.groupMemberId, perPayer));
   } else if (payers.every(p => p.splitMethod === 'FIXED')) {
     // Fixed amounts
-    payers.forEach(p => results.set(p.userId, p.splitValue!));
+    payers.forEach(p => results.set(p.groupMemberId, p.splitValue!));
   } else if (payers.every(p => p.splitMethod === 'PERCENTAGE')) {
     // Percentage split
     const totalPaid = calculateTotalExpenseAmount(expense);
     payers.forEach(p => {
       const amount = totalPaid * (p.splitValue! / 100);
-      results.set(p.userId, amount);
+      results.set(p.groupMemberId, amount);
     });
   }
 
@@ -316,20 +338,20 @@ function calculatePayerAmounts(expense: Expense): Map<string, number> {
 ```typescript
 function calculateOwerAmounts(expense: Expense): Map<string, number> {
   const owers = expense.owers;
-  const results = new Map<string, number>();
+  const results = new Map<string, number>(); // groupMemberId -> amount owed
 
   // Step 1: Calculate base amounts
   const baseAmounts = new Map<string, number>();
 
   if (owers.every(o => o.splitMethod === 'EVEN')) {
     const perOwer = expense.baseAmount / owers.length;
-    owers.forEach(o => baseAmounts.set(o.userId, perOwer));
+    owers.forEach(o => baseAmounts.set(o.groupMemberId, perOwer));
   } else if (owers.every(o => o.splitMethod === 'FIXED')) {
-    owers.forEach(o => baseAmounts.set(o.userId, o.splitValue!));
+    owers.forEach(o => baseAmounts.set(o.groupMemberId, o.splitValue!));
   } else if (owers.every(o => o.splitMethod === 'PERCENTAGE')) {
     owers.forEach(o => {
       const amount = expense.baseAmount * (o.splitValue! / 100);
-      baseAmounts.set(o.userId, amount);
+      baseAmounts.set(o.groupMemberId, amount);
     });
   }
 
@@ -346,11 +368,11 @@ function calculateOwerAmounts(expense: Expense): Map<string, number> {
     : expense.tipAmount ?? 0;
 
   // Step 4: Distribute proportionally
-  baseAmounts.forEach((base, userId) => {
+  baseAmounts.forEach((base, groupMemberId) => {
     const proportion = base / totalBase;
     const tax = taxAmount * proportion;
     const tip = tipAmount * proportion;
-    results.set(userId, base + tax + tip);
+    results.set(groupMemberId, base + tax + tip);
   });
 
   return results;
@@ -389,11 +411,12 @@ function calculateNetBalances(groupId: string): Map<string, Map<string, number>>
 - **FIXED**: Sum of splitValues must equal baseAmount
 - **PERCENTAGE**: Sum of splitValues must equal 100
 
-### 3. Virtual Users
+### 3. GroupMembers (Virtual vs Real)
 
-- Virtual users: email and password are NULL, isVirtual = true
-- Real users: email and password are NOT NULL, isVirtual = false
-- When virtual user is claimed: claimedByUserId points to real user
+- **Virtual person**: GroupMember with `userId = NULL` (no account linked)
+- **Real user**: GroupMember with `userId = <account-id>` (linked to User account)
+- **Claiming**: When virtual person joins, just `UPDATE group_members SET userId = <new-account> WHERE id = <member-id>`
+- **Duplicate prevention**: `@@unique([groupId, userId])` prevents same account joining group twice
 
 ### 4. Expense Components
 
@@ -401,28 +424,6 @@ function calculateNetBalances(groupId: string): Map<string, Map<string, number>>
 - `taxAmount` and `tipAmount` are optional (can be NULL or 0)
 - If `taxAmount` exists, `taxType` must exist
 - If `tipAmount` exists, `tipType` must exist
-
----
-
-## Migration from Current Schema
-
-Current schema has:
-```prisma
-model Expense {
-  amount Float  // This is unclear - is it base or total?
-  fee    Float  // This is unclear - tax? tip? processing fee?
-}
-
-model ExpenseSplit {
-  amountOwed Float   // ❌ CALCULATED VALUE - should not be stored
-  paid       Boolean // ❌ Confusing - settlements should be separate
-}
-```
-
-New schema separates:
-- **Input data**: baseAmount, taxAmount, taxType, tipAmount, tipType, splitMethod, splitValue
-- **Calculated data**: Everything else (computed on-the-fly)
-- **Settlements**: Separate model for tracking payments
 
 ---
 
@@ -453,15 +454,15 @@ Owers: Me, Alice, Bob, Charlie (even split)
 
   // ExpensePayer table
   payers: [
-    { userId: "me", splitMethod: "EVEN", splitValue: null }
+    { groupMemberId: "member-me", splitMethod: "EVEN", splitValue: null }
   ],
 
   // ExpenseOwer table
   owers: [
-    { userId: "me", splitMethod: "EVEN", splitValue: null },
-    { userId: "alice", splitMethod: "EVEN", splitValue: null },
-    { userId: "bob", splitMethod: "EVEN", splitValue: null },
-    { userId: "charlie", splitMethod: "EVEN", splitValue: null }
+    { groupMemberId: "member-me", splitMethod: "EVEN", splitValue: null },
+    { groupMemberId: "member-alice", splitMethod: "EVEN", splitValue: null },
+    { groupMemberId: "member-bob", splitMethod: "EVEN", splitValue: null },
+    { groupMemberId: "member-charlie", splitMethod: "EVEN", splitValue: null }
   ]
 }
 ```
