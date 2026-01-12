@@ -10,17 +10,26 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// Enums
+enum TaxTipType {
+  FIXED       // Dollar amount (in cents)
+  PERCENTAGE  // Percentage of base amount
+}
+
+enum SplitMethod {
+  EVEN        // Divide equally among all payers/owers
+  FIXED       // Fixed dollar amount (in cents)
+  PERCENTAGE  // Percentage share (0-100)
+}
+
 model User {
   id        String   @id @default(uuid())
-  name      String
   email     String   @unique
-  password  String
+  password  String   // hashed
   createdAt DateTime @default(now())
 
   // Relations
-  groupMemberships GroupMembership[]
-  paidExpenses     Expense[]         @relation("PaidByUser")
-  expenseSplits    ExpenseSplit[]
+  groupMembers GroupMember[] // All personas across groups
 
   @@map("users")
 }
@@ -32,53 +41,101 @@ model Group {
   createdAt  DateTime @default(now())
 
   // Relations
-  members  GroupMembership[]
-  expenses Expense[]
+  members     GroupMember[]
+  expenses    Expense[]
+  settlements Settlement[]
 
   @@map("groups")
 }
 
-model GroupMembership {
-  userId   String
+model GroupMember {
+  id       String   @id @default(uuid())
   groupId  String
+  userId   String?  // null = virtual person, not-null = real user
+  name     String   // How they appear in THIS group
   role     String   @default("member") // "owner" or "member"
   joinedAt DateTime @default(now())
 
   // Relations
-  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user            User?            @relation(fields: [userId], references: [id], onDelete: SetNull)
+  group           Group            @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  paidExpenses    ExpensePayer[]
+  owedExpenses    ExpenseOwer[]
+  settlementsFrom Settlement[]     @relation("SettlementFrom")
+  settlementsTo   Settlement[]     @relation("SettlementTo")
 
-  @@id([userId, groupId])
-  @@map("group_memberships")
+  @@unique([groupId, userId]) // Can't join same group twice
+  @@map("group_members")
 }
 
 model Expense {
   id          String   @id @default(uuid())
-  description String
-  amount      Float
-  fee         Float    @default(0)
-  paidByUserId String
   groupId     String
-  createdAt   DateTime @default(now())
+  name        String
+  description String   @default("")
+
+  // Base amount (pre-tax/tip) in CENTS - REQUIRED
+  baseAmount Int
+
+  // Tax - optional, stored in CENTS or as percentage
+  taxAmount Int?
+  taxType   TaxTipType?
+
+  // Tip - optional, stored in CENTS or as percentage
+  tipAmount Int?
+  tipType   TaxTipType?
+
+  createdAt DateTime @default(now())
 
   // Relations
-  paidBy User           @relation("PaidByUser", fields: [paidByUserId], references: [id], onDelete: Cascade)
   group  Group          @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  splits ExpenseSplit[]
+  payers ExpensePayer[] // Who paid and their split configuration
+  owers  ExpenseOwer[]  // Who owes and their split configuration
 
   @@map("expenses")
 }
 
-model ExpenseSplit {
-  expenseId  String
-  userId     String
-  amountOwed Float
-  paid       Boolean  @default(false)
+model ExpensePayer {
+  expenseId     String
+  groupMemberId String
+  splitMethod   SplitMethod
+  splitValue    Int? // For FIXED (cents) or PERCENTAGE (0-10000 = 0.00%-100.00%), null for EVEN
 
   // Relations
-  expense Expense @relation(fields: [expenseId], references: [id], onDelete: Cascade)
-  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expense     Expense     @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+  groupMember GroupMember @relation(fields: [groupMemberId], references: [id], onDelete: Cascade)
 
-  @@id([expenseId, userId])
-  @@map("expense_splits")
+  @@id([expenseId, groupMemberId])
+  @@map("expense_payers")
+}
+
+model ExpenseOwer {
+  expenseId     String
+  groupMemberId String
+  splitMethod   SplitMethod
+  splitValue    Int? // For FIXED (cents) or PERCENTAGE (0-10000 = 0.00%-100.00%), null for EVEN
+
+  // Relations
+  expense     Expense     @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+  groupMember GroupMember @relation(fields: [groupMemberId], references: [id], onDelete: Cascade)
+
+  @@id([expenseId, groupMemberId])
+  @@map("expense_owers")
+}
+
+model Settlement {
+  id                String   @id @default(uuid())
+  groupId           String
+  fromGroupMemberId String   // Who paid
+  toGroupMemberId   String   // Who received
+  amount            Int      // How much was paid in CENTS
+  paidAt            DateTime @default(now())
+  recordedBy        String   // GroupMemberId of who recorded this payment
+
+  // Relations
+  group      Group       @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  fromMember GroupMember @relation("SettlementFrom", fields: [fromGroupMemberId], references: [id], onDelete: Cascade)
+  toMember   GroupMember @relation("SettlementTo", fields: [toGroupMemberId], references: [id], onDelete: Cascade)
+
+  @@map("settlements")
 }
