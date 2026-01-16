@@ -24,9 +24,11 @@ export interface Settlement {
 
 const API_BASE_URL = '/api';
 
+import { TOKEN_KEY } from '../lib/auth';
+
 // Helper to get auth token
 function getAuthToken(): string | null {
-  return localStorage.getItem('authToken');
+  return localStorage.getItem(TOKEN_KEY);
 }
 
 // API call functions

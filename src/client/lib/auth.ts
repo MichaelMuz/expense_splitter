@@ -2,7 +2,7 @@
  * Authentication library for JWT token management
  */
 
-const TOKEN_KEY = 'auth_token';
+export const TOKEN_KEY = 'authToken';
 
 export interface User {
   id: string;

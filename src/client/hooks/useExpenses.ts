@@ -48,9 +48,11 @@ export interface Expense {
 
 const API_BASE_URL = '/api';
 
+import { TOKEN_KEY } from '../lib/auth';
+
 // Helper to get auth token (assumes it's stored in localStorage)
 function getAuthToken(): string | null {
-  return localStorage.getItem('authToken');
+  return localStorage.getItem(TOKEN_KEY);
 }
 
 // API call functions
