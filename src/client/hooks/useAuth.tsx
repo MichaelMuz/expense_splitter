@@ -2,10 +2,10 @@
  * Auth context and hook for managing authentication state
  */
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '../lib/api';
-import { setToken, getToken, removeToken, User, AuthResponse } from '../lib/auth';
+import { setToken, getToken, removeToken, type User, type AuthResponse } from '../lib/auth';
 import type { LoginInput, SignupInput } from '@shared/schemas/auth.schema';
 
 interface AuthContextValue {

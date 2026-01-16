@@ -162,11 +162,11 @@ export function useExpenses(groupId: string) {
 /**
  * Fetch a single expense
  */
-export function useExpense(groupId: string, expenseId: string) {
+export function useExpense(groupId: string, expenseId: string, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: ['expenses', groupId, expenseId],
     queryFn: () => fetchExpense(groupId, expenseId),
-    enabled: !!groupId && !!expenseId,
+    enabled: options?.enabled !== undefined ? options.enabled : (!!groupId && !!expenseId),
     refetchOnMount: true,
   });
 }

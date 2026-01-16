@@ -6,12 +6,15 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { SettlementForm } from '../components/balances/SettlementForm';
 import { useGroup } from '../hooks/useGroups';
 import { useCreateSettlement } from '../hooks/useSettlements';
+import { useAuth } from '../hooks/useAuth';
 import { toDollars } from '@shared/utils/currency';
+import type { CreateSettlementInput } from '@shared/schemas/settlement.schema';
 
 export default function SettlementPage() {
   const { groupId } = useParams<{ groupId: string }>();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { user } = useAuth();
 
   // Get pre-filled values from URL params (from BalanceGraph "Settle" button)
   const fromMemberId = searchParams.get('from');
@@ -22,11 +25,10 @@ export default function SettlementPage() {
   const { data: group, isLoading: groupLoading } = useGroup(groupId!);
   const createSettlement = useCreateSettlement(groupId!);
 
-  const handleSubmit = async (data: {
-    fromGroupMemberId: string;
-    toGroupMemberId: string;
-    amount: number;
-  }) => {
+  // Find current user's group member ID
+  const currentMember = group?.members?.find((m: any) => m.userId === user?.id);
+
+  const handleSubmit = async (data: CreateSettlementInput) => {
     try {
       await createSettlement.mutateAsync(data);
       navigate(`/groups/${groupId}`);
@@ -109,12 +111,13 @@ export default function SettlementPage() {
         <div className="bg-white shadow rounded-lg p-6">
           <SettlementForm
             members={group.members || []}
+            currentMemberId={currentMember?.id || ''}
             onSubmit={handleSubmit}
             onCancel={handleCancel}
             isSubmitting={createSettlement.isPending}
-            defaultFrom={fromMemberId || undefined}
-            defaultTo={toMemberId || undefined}
-            suggestedAmount={suggestedAmount}
+            initialFrom={fromMemberId || undefined}
+            initialTo={toMemberId || undefined}
+            initialAmount={amountCents ? parseInt(amountCents) : undefined}
           />
         </div>
       </div>

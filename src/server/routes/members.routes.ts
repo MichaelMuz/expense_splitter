@@ -96,7 +96,7 @@ router.post(
         throw new AppError('Not authenticated', 401);
       }
 
-      const { groupId } = req.params;
+      const groupId = req.params.groupId!; // Validated by middleware
       const { name } = req.body;
 
       // Verify group exists and user is a member

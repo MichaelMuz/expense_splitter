@@ -52,7 +52,7 @@ router.get(
   validateParams(groupParamsSchema),
   async (req, res, next) => {
     try {
-      const { groupId } = req.params;
+      const groupId = req.params.groupId!; // Validated by middleware
       const userId = req.user!.userId;
 
       // Check membership
@@ -166,7 +166,7 @@ router.post(
   validateBody(createSettlementSchema),
   async (req, res, next) => {
     try {
-      const { groupId } = req.params;
+      const groupId = req.params.groupId!; // Validated by middleware
       const userId = req.user!.userId;
       const { fromGroupMemberId, toGroupMemberId, amount, recordedBy } = req.body;
 
@@ -276,23 +276,7 @@ router.post(
         },
       });
 
-      res.status(201).json({
-        settlement: {
-          id: settlement.id,
-          groupId: settlement.groupId,
-          from: {
-            id: settlement.fromMember.id,
-            name: settlement.fromMember.name,
-          },
-          to: {
-            id: settlement.toMember.id,
-            name: settlement.toMember.name,
-          },
-          amount: settlement.amount,
-          paidAt: settlement.paidAt,
-          recordedBy: settlement.recordedBy,
-        },
-      });
+      res.status(201).json({ settlement });
     } catch (error) {
       next(error);
     }
@@ -309,7 +293,7 @@ router.get(
   validateParams(groupParamsSchema),
   async (req, res, next) => {
     try {
-      const { groupId } = req.params;
+      const groupId = req.params.groupId!; // Validated by middleware
       const userId = req.user!.userId;
 
       // Check membership
@@ -374,7 +358,8 @@ router.delete(
   validateParams(settlementParamsSchema),
   async (req, res, next) => {
     try {
-      const { groupId, settlementId } = req.params;
+      const groupId = req.params.groupId!; // Validated by middleware
+      const settlementId = req.params.settlementId!; // Validated by middleware
       const userId = req.user!.userId;
 
       // Check membership

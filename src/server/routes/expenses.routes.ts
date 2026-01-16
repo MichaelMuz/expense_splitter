@@ -110,7 +110,7 @@ router.get(
   validateParams(groupParamsSchema),
   async (req, res, next) => {
     try {
-      const { groupId } = req.params;
+      const groupId = req.params.groupId!; // Validated by middleware
       const userId = req.user!.userId;
 
       // Check membership
@@ -171,7 +171,7 @@ router.post(
   validateBody(createExpenseSchema),
   async (req, res, next) => {
     try {
-      const { groupId } = req.params;
+      const groupId = req.params.groupId!; // Validated by middleware
       const userId = req.user!.userId;
       const expenseData = req.body;
 
@@ -273,7 +273,8 @@ router.get(
   validateParams(expenseParamsSchema),
   async (req, res, next) => {
     try {
-      const { groupId, expenseId } = req.params;
+      const groupId = req.params.groupId!; // Validated by middleware
+      const expenseId = req.params.expenseId!; // Validated by middleware
       const userId = req.user!.userId;
 
       // Check membership
@@ -341,7 +342,8 @@ router.patch(
   validateBody(updateExpenseSchema),
   async (req, res, next) => {
     try {
-      const { groupId, expenseId } = req.params;
+      const groupId = req.params.groupId!; // Validated by middleware
+      const expenseId = req.params.expenseId!; // Validated by middleware
       const userId = req.user!.userId;
       const updateData = req.body;
 
@@ -466,7 +468,8 @@ router.delete(
   validateParams(expenseParamsSchema),
   async (req, res, next) => {
     try {
-      const { groupId, expenseId } = req.params;
+      const groupId = req.params.groupId!; // Validated by middleware
+      const expenseId = req.params.expenseId!; // Validated by middleware
       const userId = req.user!.userId;
 
       // Check membership

@@ -41,7 +41,7 @@ router.post(
           members: {
             create: {
               userId: req.user.userId,
-              name: req.user.email.split('@')[0], // Default to email prefix
+              name: req.user.email.split('@')[0]!, // Default to email prefix
               role: 'owner',
             },
           },
@@ -51,15 +51,7 @@ router.post(
         },
       });
 
-      res.status(201).json({
-        group: {
-          id: group.id,
-          name: group.name,
-          inviteCode: group.inviteCode,
-          createdAt: group.createdAt,
-          members: group.members,
-        },
-      });
+      res.status(201).json({ group });
     } catch (error) {
       next(error);
     }
@@ -224,7 +216,7 @@ router.post(
           data: {
             groupId: group.id,
             userId: req.user.userId,
-            name: req.user.email.split('@')[0], // Default to email prefix
+            name: req.user.email.split('@')[0]!, // Default to email prefix
             role: 'member',
           },
         });

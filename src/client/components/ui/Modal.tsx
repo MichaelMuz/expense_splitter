@@ -2,7 +2,7 @@
  * Reusable Modal component
  */
 
-import { ReactNode, useEffect } from 'react';
+import { type ReactNode, useEffect } from 'react';
 
 interface ModalProps {
   isOpen: boolean;

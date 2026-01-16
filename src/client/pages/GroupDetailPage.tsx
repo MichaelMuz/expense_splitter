@@ -10,16 +10,7 @@ import { BalanceGraph } from '../components/balances/BalanceGraph';
 import { MemberList } from '../components/groups/MemberList';
 import { InviteLink } from '../components/groups/InviteLink';
 import { VirtualPersonClaim } from '../components/groups/VirtualPersonClaim';
-
-// Mock hook - replace with actual implementation
-function useGroup(groupId: string) {
-  // TODO: Implement actual API call
-  return {
-    data: null,
-    isLoading: true,
-    error: null,
-  };
-}
+import { useGroup } from '../hooks/useGroups';
 
 type Tab = 'expenses' | 'balances' | 'members';
 
