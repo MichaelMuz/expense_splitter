@@ -1,9 +1,15 @@
 /**
- * ExpenseCard component - displays a single expense in a card format
+ * ExpenseCard component - displays a single expense in a card format with modern design
  */
 
+import { useState } from 'react';
+import { motion } from 'framer-motion';
+import { Receipt, ChevronDown, ChevronUp, Edit2, Trash2 } from 'lucide-react';
 import { formatCurrency } from '../../../shared/utils/currency';
 import type { Expense } from '../../hooks/useExpenses';
+import { Avatar } from '../ui/Avatar';
+import { Button } from '../ui/Button';
+import { hoverLift, hoverGlow } from '../../utils/animations';
 
 interface ExpenseCardProps {
   expense: Expense;
@@ -12,6 +18,8 @@ interface ExpenseCardProps {
 }
 
 export function ExpenseCard({ expense, onEdit, onDelete }: ExpenseCardProps) {
+  const [showBreakdown, setShowBreakdown] = useState(false);
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       month: 'short',
@@ -20,16 +28,29 @@ export function ExpenseCard({ expense, onEdit, onDelete }: ExpenseCardProps) {
     });
   };
 
+  const hasBreakdown = expense.taxAmount || expense.tipAmount;
+
   return (
-    <div className="bg-white shadow rounded-lg p-4 border border-gray-200">
+    <motion.div
+      className="bg-white shadow-sm rounded-xl p-5 border border-neutral-200 overflow-hidden"
+      whileHover={{ ...hoverLift, boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)' }}
+      transition={{ duration: 0.2 }}
+    >
       {/* Header */}
-      <div className="flex justify-between items-start mb-3">
-        <div>
-          <h3 className="text-lg font-semibold text-gray-900">{expense.name}</h3>
-          <p className="text-sm text-gray-500">{formatDate(expense.createdAt)}</p>
+      <div className="flex justify-between items-start mb-4">
+        <div className="flex items-start gap-3 flex-1">
+          <div className="text-primary-500 mt-1">
+            <Receipt size={24} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h3 className="text-lg font-bold text-neutral-800 mb-1">{expense.name}</h3>
+            <p className="text-sm text-neutral-500">
+              {formatDate(expense.createdAt)} • Paid by {expense.payers.map(p => p.groupMember.name).join(', ')}
+            </p>
+          </div>
         </div>
-        <div className="text-right">
-          <p className="text-2xl font-bold text-gray-900">
+        <div className="text-right ml-4">
+          <p className="text-2xl font-bold font-mono text-neutral-800">
             {formatCurrency(expense.totalAmount)}
           </p>
         </div>
@@ -37,64 +58,78 @@ export function ExpenseCard({ expense, onEdit, onDelete }: ExpenseCardProps) {
 
       {/* Description */}
       {expense.description && (
-        <p className="text-sm text-gray-600 mb-3">{expense.description}</p>
+        <p className="text-sm text-neutral-600 mb-4 pb-4 border-b border-neutral-100">
+          {expense.description}
+        </p>
       )}
 
-      {/* Breakdown */}
-      <div className="space-y-2 mb-3">
-        <div className="flex justify-between text-sm">
-          <span className="text-gray-600">Base:</span>
-          <span className="font-medium">{formatCurrency(expense.baseAmount)}</span>
+      {/* Breakdown (Collapsible) */}
+      {hasBreakdown && (
+        <div className="mb-4">
+          <button
+            onClick={() => setShowBreakdown(!showBreakdown)}
+            className="flex items-center gap-2 text-sm font-semibold text-neutral-700 hover:text-neutral-900 transition-colors mb-2"
+          >
+            {showBreakdown ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+            BREAKDOWN
+          </button>
+          {showBreakdown && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="space-y-2 pl-6 pb-4 border-b border-neutral-100"
+            >
+              <div className="flex justify-between text-sm">
+                <span className="text-neutral-600">Base:</span>
+                <span className="font-mono font-medium text-neutral-800">
+                  {formatCurrency(expense.baseAmount)}
+                </span>
+              </div>
+              {expense.taxAmount && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-neutral-600">
+                    Tax ({expense.taxType === 'PERCENTAGE' ? `${expense.taxAmount / 100}%` : 'Fixed'}):
+                  </span>
+                  <span className="font-mono font-medium text-neutral-800">
+                    {expense.taxType === 'PERCENTAGE'
+                      ? formatCurrency(Math.round((expense.baseAmount * expense.taxAmount) / 10000))
+                      : formatCurrency(expense.taxAmount)}
+                  </span>
+                </div>
+              )}
+              {expense.tipAmount && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-neutral-600">
+                    Tip ({expense.tipType === 'PERCENTAGE' ? `${expense.tipAmount / 100}%` : 'Fixed'}):
+                  </span>
+                  <span className="font-mono font-medium text-neutral-800">
+                    {expense.tipType === 'PERCENTAGE'
+                      ? formatCurrency(Math.round((expense.baseAmount * expense.tipAmount) / 10000))
+                      : formatCurrency(expense.tipAmount)}
+                  </span>
+                </div>
+              )}
+            </motion.div>
+          )}
         </div>
-        {expense.taxAmount && (
-          <div className="flex justify-between text-sm">
-            <span className="text-gray-600">
-              Tax ({expense.taxType === 'PERCENTAGE' ? `${expense.taxAmount / 100}%` : 'Fixed'}):
-            </span>
-            <span className="font-medium">
-              {expense.taxType === 'PERCENTAGE'
-                ? formatCurrency(Math.round((expense.baseAmount * expense.taxAmount) / 10000))
-                : formatCurrency(expense.taxAmount)}
-            </span>
-          </div>
-        )}
-        {expense.tipAmount && (
-          <div className="flex justify-between text-sm">
-            <span className="text-gray-600">
-              Tip ({expense.tipType === 'PERCENTAGE' ? `${expense.tipAmount / 100}%` : 'Fixed'}):
-            </span>
-            <span className="font-medium">
-              {expense.tipType === 'PERCENTAGE'
-                ? formatCurrency(Math.round((expense.baseAmount * expense.tipAmount) / 10000))
-                : formatCurrency(expense.tipAmount)}
-            </span>
-          </div>
-        )}
-      </div>
+      )}
 
-      {/* Payers */}
-      <div className="border-t pt-3 mb-3">
-        <h4 className="text-sm font-semibold text-gray-700 mb-2">Paid by:</h4>
-        <div className="space-y-1">
-          {expense.payers.map((payer) => (
-            <div key={payer.groupMemberId} className="flex justify-between text-sm">
-              <span className="text-gray-600">{payer.groupMember.name}</span>
-              <span className="font-medium text-green-600">
-                {formatCurrency(payer.calculatedAmount)}
-              </span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Owers */}
-      <div className="border-t pt-3 mb-3">
-        <h4 className="text-sm font-semibold text-gray-700 mb-2">Split between:</h4>
-        <div className="space-y-1">
+      {/* Split Between */}
+      <div className="mb-4">
+        <h4 className="text-xs font-bold text-neutral-500 uppercase tracking-wide mb-3">
+          Split Between
+        </h4>
+        <div className="space-y-2">
           {expense.owers.map((ower) => (
-            <div key={ower.groupMemberId} className="flex justify-between text-sm">
-              <span className="text-gray-600">{ower.groupMember.name}</span>
-              <span className="font-medium">{formatCurrency(ower.calculatedAmount)}</span>
+            <div key={ower.groupMemberId} className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Avatar name={ower.groupMember.name} size="sm" />
+                <span className="text-sm text-neutral-700">{ower.groupMember.name}</span>
+              </div>
+              <span className="font-mono font-semibold text-sm text-neutral-800">
+                {formatCurrency(ower.calculatedAmount)}
+              </span>
             </div>
           ))}
         </div>
@@ -102,25 +137,31 @@ export function ExpenseCard({ expense, onEdit, onDelete }: ExpenseCardProps) {
 
       {/* Actions */}
       {(onEdit || onDelete) && (
-        <div className="flex gap-2 pt-3 border-t">
+        <div className="flex gap-2 pt-4 border-t border-neutral-100">
           {onEdit && (
-            <button
+            <Button
               onClick={onEdit}
-              className="flex-1 px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-md hover:bg-blue-100"
+              variant="ghost"
+              size="sm"
+              leftIcon={<Edit2 size={16} />}
+              className="flex-1"
             >
               Edit
-            </button>
+            </Button>
           )}
           {onDelete && (
-            <button
+            <Button
               onClick={onDelete}
-              className="flex-1 px-4 py-2 text-sm font-medium text-red-600 bg-red-50 rounded-md hover:bg-red-100"
+              variant="ghost"
+              size="sm"
+              leftIcon={<Trash2 size={16} />}
+              className="flex-1 text-danger-600 hover:text-danger-700 hover:bg-danger-50"
             >
               Delete
-            </button>
+            </Button>
           )}
         </div>
       )}
-    </div>
+    </motion.div>
   );
 }
