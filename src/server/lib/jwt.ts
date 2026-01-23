@@ -3,14 +3,16 @@
  */
 
 import jwt from 'jsonwebtoken';
+import {z} from 'zod';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
-const JWT_EXPIRES_IN = '7d'; // 7 days
+const JWT_SECRET = z.string().min(32).parse(process.env.JWT_SECRET);
+const JWT_EXPIRES_IN = '7d';
 
-export interface TokenPayload {
-  userId: string;
-  email: string;
-}
+const TokenPayloadSchema = z.object({
+  userId: z.string(),
+  email: z.string()
+});
+export type TokenPayload = z.infer<typeof TokenPayloadSchema>;
 
 /**
  * Sign a JWT token
@@ -31,7 +33,7 @@ export function signToken(payload: TokenPayload): string {
  */
 export function verifyToken(token: string): TokenPayload {
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as TokenPayload;
+    const decoded = TokenPayloadSchema.parse(jwt.verify(token, JWT_SECRET))
     return decoded;
   } catch (error) {
     if (error instanceof jwt.TokenExpiredError) {
