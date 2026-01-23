@@ -1,5 +1,6 @@
 /**
  * JWT token utilities for authentication
+ * TODO: Maybe use Lucia instead of doing our own auth in the future?
  */
 
 import jwt from 'jsonwebtoken';
