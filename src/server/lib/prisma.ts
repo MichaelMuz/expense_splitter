@@ -14,7 +14,6 @@ global.__prismaSingletonForHotReload = global.__prismaSingletonForHotReload || n
 });
 export const prisma = global.__prismaSingletonForHotReload;
 
-// Graceful shutdown
 process.on('beforeExit', async () => {
   await prisma.$disconnect();
 });
