@@ -2,11 +2,11 @@ import express from 'express';
 import cors from 'cors';
 import { prisma } from './lib/prisma';
 import { errorHandler } from './middleware/error-handler';
-import authRoutes from './routes/auth.routes';
-import groupsRoutes from './routes/groups.routes';
-import membersRoutes from './routes/members.routes';
-import expensesRouter from './routes/expenses.routes';
-import settlementsRouter from './routes/settlements.routes';
+import authRoutes from './routes/auth';
+import groupsRoutes from './routes/groups';
+import membersRoutes from './routes/members';
+import expensesRouter from './routes/expenses';
+import settlementsRouter from './routes/settlements';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
