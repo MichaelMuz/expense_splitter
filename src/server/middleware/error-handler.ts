@@ -25,6 +25,7 @@ export class AppError extends Error {
 /**
  * Global error handling middleware
  * Must be registered last in middleware chain
+ * TODO: Do we really want to try and handle such a random set of errors here in the top level handler?
  */
 export function errorHandler(
   error: Error,
