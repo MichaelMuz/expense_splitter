@@ -14,6 +14,8 @@ import { AppError } from '../middleware/error-handler';
 
 const router = Router();
 
+// TODO: Big problem, we are not sharing these return types in a file so the frontend duplicates these. We are losing out on big type safety.
+
 /**
  * POST /api/auth/signup
  * Create a new user account
