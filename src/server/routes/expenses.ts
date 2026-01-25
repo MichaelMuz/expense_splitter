@@ -20,7 +20,6 @@ import {
 } from '../../shared/utils/calculations';
 import { Prisma } from '@prisma/client';
 
-const router = Router();
 
 // Param validation schema
 const expenseParamsSchema = z.object({
@@ -148,13 +147,15 @@ async function checkOwersPayersGroupMembership(req: Request, res: Response, next
   next();
 }
 
+const router = Router();
+router.use(authenticateToken);
+
 /**
  * GET /api/groups/:groupId/expenses
  * List all expenses in a group with calculations
  */
 router.get(
   '/:groupId/expenses',
-  authenticateToken,
   validateParams(groupParamsSchema),
   checkGroupMembership,
   async (req, res, next) => {
@@ -184,7 +185,6 @@ router.get(
  */
 router.post(
   '/:groupId/expenses',
-  authenticateToken,
   validateParams(groupParamsSchema),
   validateBody(createExpenseSchema),
   checkGroupMembership,
@@ -239,7 +239,6 @@ router.post(
  */
 router.get(
   '/:groupId/expenses/:expenseId',
-  authenticateToken,
   validateParams(expenseParamsSchema),
   checkGroupMembership,
   async (req, res, next) => {
@@ -277,7 +276,6 @@ router.get(
  */
 router.patch(
   '/:groupId/expenses/:expenseId',
-  authenticateToken,
   validateParams(expenseParamsSchema),
   validateBody(updateExpenseSchema),
   checkGroupMembership,
@@ -352,7 +350,6 @@ router.patch(
  */
 router.delete(
   '/:groupId/expenses/:expenseId',
-  authenticateToken,
   validateParams(expenseParamsSchema),
   checkGroupMembership,
   async (req, res, next) => {
