@@ -22,6 +22,7 @@ export const owerSchema = z.object({
   splitValue: z.number().int().nullable().optional(),
 });
 
+// TODO: We have a lot of repeat logic here, should be dry'd up
 // Create expense schema
 export const createExpenseSchema = z
   .object({

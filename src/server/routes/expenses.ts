@@ -45,6 +45,7 @@ async function checkGroupMembership(userId: string, groupId: string) {
 
 /**
  * Helper function to format expense with calculated amounts
+ * TODO: Make this strongly typed. I think we can extract this from prisma directly
  */
 function formatExpenseWithCalculations(expense: any) {
   const expenseData: ExpenseData = {
@@ -103,6 +104,7 @@ function formatExpenseWithCalculations(expense: any) {
 /**
  * GET /api/groups/:groupId/expenses
  * List all expenses in a group with calculations
+ * TODO: We should literally never have a if check followed by a return in a route. If that ever happens it implies that we should be using that check as middleware.
  */
 router.get(
   '/:groupId/expenses',
