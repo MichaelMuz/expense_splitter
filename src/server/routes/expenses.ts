@@ -7,7 +7,7 @@ import { Router } from 'express';
 import { prisma } from '../lib/prisma';
 import { authenticateToken } from '../middleware/auth';
 import { validateBody, validateParams } from '../middleware/validate';
-import { createExpenseSchema, updateExpenseSchema } from '../../shared/schemas/expense.schema';
+import { createExpenseSchema, updateExpenseSchema, type CreateExpenseInput } from '../../shared/schemas/expense.schema';
 import { z } from 'zod';
 import {
   calculateTotalExpenseAmount,
@@ -17,6 +17,7 @@ import {
   type PayerData,
   type OwerData,
 } from '../../shared/utils/calculations';
+import { Prisma } from '@prisma/client';
 
 const router = Router();
 
@@ -43,11 +44,38 @@ async function checkGroupMembership(userId: string, groupId: string) {
   return membership;
 }
 
+const expenseWithRelations = Prisma.validator<Prisma.ExpenseDefaultArgs>()({
+  include: {
+    payers: {
+      include: {
+        groupMember: {
+          select: {
+            id: true,
+            name: true,
+            userId: true,
+          },
+        },
+      },
+    },
+    owers: {
+      include: {
+        groupMember: {
+          select: {
+            id: true,
+            name: true,
+            userId: true,
+          },
+        },
+      },
+    },
+  },
+});
+type ExpenseWithRelations = Prisma.ExpenseGetPayload<typeof expenseWithRelations>;
+
 /**
  * Helper function to format expense with calculated amounts
- * TODO: Make this strongly typed. I think we can extract this from prisma directly
  */
-function formatExpenseWithCalculations(expense: any) {
+function formatExpenseWithCalculations(expense: ExpenseWithRelations) {
   const expenseData: ExpenseData = {
     baseAmount: expense.baseAmount,
     taxAmount: expense.taxAmount,
@@ -56,13 +84,13 @@ function formatExpenseWithCalculations(expense: any) {
     tipType: expense.tipType,
   };
 
-  const payers: PayerData[] = expense.payers.map((p: any) => ({
+  const payers: PayerData[] = expense.payers.map(p => ({
     groupMemberId: p.groupMemberId,
     splitMethod: p.splitMethod,
     splitValue: p.splitValue,
   }));
 
-  const owers: OwerData[] = expense.owers.map((o: any) => ({
+  const owers: OwerData[] = expense.owers.map(o => ({
     groupMemberId: o.groupMemberId,
     splitMethod: o.splitMethod,
     splitValue: o.splitValue,
@@ -84,14 +112,14 @@ function formatExpenseWithCalculations(expense: any) {
     tipType: expense.tipType,
     totalAmount,
     createdAt: expense.createdAt,
-    payers: expense.payers.map((p: any) => ({
+    payers: expense.payers.map(p => ({
       groupMemberId: p.groupMemberId,
       groupMember: p.groupMember,
       splitMethod: p.splitMethod,
       splitValue: p.splitValue,
       calculatedAmount: payerAmounts.get(p.groupMemberId) || 0,
     })),
-    owers: expense.owers.map((o: any) => ({
+    owers: expense.owers.map(o => ({
       groupMemberId: o.groupMemberId,
       groupMember: o.groupMember,
       splitMethod: o.splitMethod,
@@ -125,30 +153,7 @@ router.get(
       // Fetch all expenses for the group
       const expenses = await prisma.expense.findMany({
         where: { groupId },
-        include: {
-          payers: {
-            include: {
-              groupMember: {
-                select: {
-                  id: true,
-                  name: true,
-                  userId: true,
-                },
-              },
-            },
-          },
-          owers: {
-            include: {
-              groupMember: {
-                select: {
-                  id: true,
-                  name: true,
-                  userId: true,
-                },
-              },
-            },
-          },
-        },
+        ...expenseWithRelations,
         orderBy: { createdAt: 'desc' },
       });
 
@@ -175,7 +180,7 @@ router.post(
     try {
       const groupId = req.params.groupId!; // Validated by middleware
       const userId = req.user!.userId;
-      const expenseData = req.body;
+      const expenseData = req.body as CreateExpenseInput;
 
       // Check membership
       const membership = await checkGroupMembership(userId, groupId);
@@ -186,8 +191,8 @@ router.post(
 
       // Verify all payers and owers are members of the group
       const allMemberIds = [
-        ...expenseData.payers.map((p: any) => p.groupMemberId),
-        ...expenseData.owers.map((o: any) => o.groupMemberId),
+        ...expenseData.payers.map(p => p.groupMemberId),
+        ...expenseData.owers.map(o => o.groupMemberId),
       ];
       const uniqueMemberIds = [...new Set(allMemberIds)];
 
@@ -215,44 +220,21 @@ router.post(
           tipAmount: expenseData.tipAmount,
           tipType: expenseData.tipType,
           payers: {
-            create: expenseData.payers.map((p: any) => ({
+            create: expenseData.payers.map(p => ({
               groupMemberId: p.groupMemberId,
               splitMethod: p.splitMethod,
               splitValue: p.splitValue,
             })),
           },
           owers: {
-            create: expenseData.owers.map((o: any) => ({
+            create: expenseData.owers.map(o => ({
               groupMemberId: o.groupMemberId,
               splitMethod: o.splitMethod,
               splitValue: o.splitValue,
             })),
           },
         },
-        include: {
-          payers: {
-            include: {
-              groupMember: {
-                select: {
-                  id: true,
-                  name: true,
-                  userId: true,
-                },
-              },
-            },
-          },
-          owers: {
-            include: {
-              groupMember: {
-                select: {
-                  id: true,
-                  name: true,
-                  userId: true,
-                },
-              },
-            },
-          },
-        },
+        ...expenseWithRelations
       });
 
       // Format with calculations
@@ -292,30 +274,7 @@ router.get(
           id: expenseId,
           groupId,
         },
-        include: {
-          payers: {
-            include: {
-              groupMember: {
-                select: {
-                  id: true,
-                  name: true,
-                  userId: true,
-                },
-              },
-            },
-          },
-          owers: {
-            include: {
-              groupMember: {
-                select: {
-                  id: true,
-                  name: true,
-                  userId: true,
-                },
-              },
-            },
-          },
-        },
+        ...expenseWithRelations
       });
 
       if (!expense) {
@@ -347,7 +306,7 @@ router.patch(
       const groupId = req.params.groupId!; // Validated by middleware
       const expenseId = req.params.expenseId!; // Validated by middleware
       const userId = req.user!.userId;
-      const updateData = req.body;
+      const updateData = req.body as CreateExpenseInput;
 
       // Check membership
       const membership = await checkGroupMembership(userId, groupId);
@@ -372,8 +331,8 @@ router.patch(
       // If updating payers or owers, verify member IDs
       if (updateData.payers || updateData.owers) {
         const allMemberIds = [
-          ...(updateData.payers?.map((p: any) => p.groupMemberId) || []),
-          ...(updateData.owers?.map((o: any) => o.groupMemberId) || []),
+          ...(updateData.payers?.map(p => p.groupMemberId) || []),
+          ...(updateData.owers?.map(o => o.groupMemberId) || []),
         ];
         const uniqueMemberIds = [...new Set(allMemberIds)];
 
@@ -406,7 +365,7 @@ router.patch(
           ...(updateData.payers && {
             payers: {
               deleteMany: {},
-              create: updateData.payers.map((p: any) => ({
+              create: updateData.payers.map(p => ({
                 groupMemberId: p.groupMemberId,
                 splitMethod: p.splitMethod,
                 splitValue: p.splitValue,
@@ -416,7 +375,7 @@ router.patch(
           ...(updateData.owers && {
             owers: {
               deleteMany: {},
-              create: updateData.owers.map((o: any) => ({
+              create: updateData.owers.map(o => ({
                 groupMemberId: o.groupMemberId,
                 splitMethod: o.splitMethod,
                 splitValue: o.splitValue,
@@ -424,30 +383,7 @@ router.patch(
             },
           }),
         },
-        include: {
-          payers: {
-            include: {
-              groupMember: {
-                select: {
-                  id: true,
-                  name: true,
-                  userId: true,
-                },
-              },
-            },
-          },
-          owers: {
-            include: {
-              groupMember: {
-                select: {
-                  id: true,
-                  name: true,
-                  userId: true,
-                },
-              },
-            },
-          },
-        },
+        ...expenseWithRelations
       });
 
       // Format with calculations
