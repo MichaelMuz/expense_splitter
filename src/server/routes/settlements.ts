@@ -31,6 +31,7 @@ const groupParamsSchema = z.object({
 
 /**
  * Helper function to check if user is a member of a group
+ * TODO find a way to reuse existing middleware
  */
 async function checkGroupMembership(userId: string, groupId: string) {
   const membership = await prisma.groupMember.findFirst({
