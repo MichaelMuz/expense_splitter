@@ -29,9 +29,7 @@ router.get(
   validateParams(groupIdParamSchema),
   async (req: Request, res: Response, next) => {
     try {
-      if (!req.user) {
-        throw new AppError('Not authenticated', 401);
-      }
+      const user = req.user!
 
       const { groupId } = req.params;
 
@@ -48,7 +46,7 @@ router.get(
       }
 
       const isMember = group.members.some(
-        (member) => member.userId === req.user!.userId
+        (member) => member.userId === user.userId
       );
 
       if (!isMember) {
@@ -92,10 +90,7 @@ router.post(
   validateBody(createMemberSchema),
   async (req: Request, res: Response, next) => {
     try {
-      if (!req.user) {
-        throw new AppError('Not authenticated', 401);
-      }
-
+      const user = req.user!
       const groupId = req.params.groupId!; // Validated by middleware
       const { name } = req.body;
 
@@ -112,7 +107,7 @@ router.post(
       }
 
       const isMember = group.members.some(
-        (member) => member.userId === req.user!.userId
+        (member) => member.userId === user.userId
       );
 
       if (!isMember) {
@@ -146,10 +141,7 @@ router.patch(
   validateBody(updateMemberSchema),
   async (req: Request, res: Response, next) => {
     try {
-      if (!req.user) {
-        throw new AppError('Not authenticated', 401);
-      }
-
+      const user = req.user! // Validated by middleware
       const { groupId, memberId } = req.params;
       const { name } = req.body;
 
@@ -166,7 +158,7 @@ router.patch(
       }
 
       const currentUserMember = group.members.find(
-        (member) => member.userId === req.user!.userId
+        (member) => member.userId === user.userId
       );
 
       if (!currentUserMember) {
@@ -218,9 +210,7 @@ router.delete(
   validateParams(memberIdParamSchema),
   async (req: Request, res: Response, next) => {
     try {
-      if (!req.user) {
-        throw new AppError('Not authenticated', 401);
-      }
+      const user = req.user!
 
       const { groupId, memberId } = req.params;
 
@@ -237,7 +227,7 @@ router.delete(
       }
 
       const currentUserMember = group.members.find(
-        (member) => member.userId === req.user!.userId
+        (member) => member.userId === user.userId
       );
 
       if (!currentUserMember) {
