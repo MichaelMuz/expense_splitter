@@ -2,7 +2,6 @@
  * Group management routes
  */
 
-import { Prisma } from '@prisma/client';
 import { Router } from 'express';
 import type { Request, Response } from 'express';
 import { prisma } from '../lib/prisma';
@@ -17,24 +16,24 @@ import {
 } from '../../shared/schemas/group.schema';
 import { assertUnreachable } from '@/shared/utils/type-helpers';
 
-const groupWithMembersAndExpenseCount = Prisma.validator<Prisma.GroupDefaultArgs>()({
+const groupWithMembersAndExpenseCount = {
   include: {
-  members: {
-    select: {
-      id: true,
-      name: true,
-      role: true,
-      userId: true,
-      joinedAt: true,
-    }
-  },
-  _count: {
-    select: {
-      expenses: true,
+    members: {
+      select: {
+        id: true,
+        name: true,
+        role: true,
+        userId: true,
+        joinedAt: true,
+      }
     },
+    _count: {
+      select: {
+        expenses: true,
+      },
+    }
   }
-  }
-});
+} as const;
 
 const router = Router();
 
@@ -54,7 +53,6 @@ router.get(
         where: { inviteCode },
         ...groupWithMembersAndExpenseCount
       });
-
       if (!group) {
         res.status(404).json({ error: 'Group not found' });
         return;
@@ -91,7 +89,6 @@ router.post(
           members: true,
         },
       });
-
       if (!group) {
         res.status(404).json({ error: 'Invalid invite code' });
         return;
@@ -236,7 +233,6 @@ router.get(
         },
         ...groupWithMembersAndExpenseCount
       });
-
       if (!group) {
         res.status(404).json({ error: 'Group not found' });
         return;
@@ -268,7 +264,6 @@ router.delete(
           members: true,
         },
       });
-
       if (!group) {
         res.status(404).json({ error: 'Group not found' });
         return;
