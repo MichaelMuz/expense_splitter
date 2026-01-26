@@ -17,7 +17,8 @@ import {
 } from '../../shared/schemas/group.schema';
 import { assertUnreachable } from '@/shared/utils/type-helpers';
 
-const memberSelect = {
+const groupWithMembersAndExpenseCount = Prisma.validator<Prisma.GroupDefaultArgs>()({
+  include: {
   members: {
     select: {
       id: true,
@@ -26,21 +27,12 @@ const memberSelect = {
       userId: true,
       joinedAt: true,
     }
-  }
-} as const;
-
-const countSelect = {
+  },
   _count: {
     select: {
       expenses: true,
     },
   }
-} as const;
-
-const groupWithMembersAndExpenseCount = Prisma.validator<Prisma.GroupDefaultArgs>()({
-  include: {
-    ...memberSelect,
-    ...countSelect
   }
 });
 
