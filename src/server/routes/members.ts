@@ -89,29 +89,36 @@ router.post(
   }
 );
 
+router.use(
+  '/:groupId/members/:memberId',
+  validateParams(memberIdParamSchema),
+  checkGroupMembership,
+  async (req: Request, res: Response, next) => {
+    const memberId = req.params!.memberId!;
+    const groupMembership = req.groupMembership!;
+
+    // Only owner can remove other members, members can remove themselves
+    const isOwner = groupMembership.role === 'owner';
+    const isOwnProfile = memberId === groupMembership.id;
+    if (!isOwner && !isOwnProfile) {
+      res.status(403).json({ error: 'You can only edit yourself unless you are the group owner' });
+      return;
+    }
+    next();
+  })
+
 /**
  * PATCH /api/groups/:groupId/members/:memberId
  * Update member name
  */
 router.patch(
   '/:groupId/members/:memberId',
-  validateParams(memberIdParamSchema),
   validateBody(updateMemberSchema),
-  checkGroupMembership,
   async (req: Request, res: Response, next) => {
     try {
       const groupId = req.params!.groupId!; // Validated by middleware
       const memberId = req.params!.memberId!;
       const name = req.body.name as string;
-      const groupMembership = req.groupMembership!;
-
-      // Only allow updating own name or if user is owner
-      const isOwner = groupMembership.role === 'owner';
-      const isOwnProfile = memberId === groupMembership.id;
-      if (!isOwner && !isOwnProfile) {
-        res.status(403).json({ error: 'You can only update your own name unless you are the group owner' });
-        return;
-      }
 
       const updatedMember = await (async () => {
         // update the member if they belong to the group
@@ -146,21 +153,10 @@ router.patch(
  */
 router.delete(
   '/:groupId/members/:memberId',
-  validateParams(memberIdParamSchema),
-  checkGroupMembership,
   async (req: Request, res: Response, next) => {
     try {
       const groupId = req.params!.groupId!; // Validated by middleware
       const memberId = req.params!.memberId!;
-      const groupMembership = req.groupMembership!;
-
-      // Only owner can remove other members, members can remove themselves
-      const isOwner = groupMembership.role === 'owner';
-      const isOwnProfile = memberId === groupMembership.id;
-      if (!isOwner && !isOwnProfile) {
-        res.status(403).json({ error: 'Only the group owner can remove other members' });
-        return;
-      }
 
       // Check if member exists in group, has any expenses, or is the owner
       const memberToRemove = await prisma.groupMember.findFirst({
