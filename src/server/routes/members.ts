@@ -13,7 +13,7 @@ import {
   createMemberSchema,
   updateMemberSchema,
 } from '../../shared/schemas/group.schema';
-import { AppError } from '../middleware/error-handler';
+import { checkGroupMembership } from '../middleware/group-membership';
 
 const router = Router();
 
@@ -26,31 +26,10 @@ router.use(authenticateToken);
 router.get(
   '/:groupId/members',
   validateParams(groupIdParamSchema),
+  checkGroupMembership,
   async (req: Request, res: Response, next) => {
     try {
-      const user = req.user!
-
       const { groupId } = req.params;
-
-      // Verify group exists and user is a member
-      const group = await prisma.group.findUnique({
-        where: { id: groupId },
-        include: {
-          members: true,
-        },
-      });
-
-      if (!group) {
-        throw new AppError('Group not found', 404);
-      }
-
-      const isMember = group.members.some(
-        (member) => member.userId === user.userId
-      );
-
-      if (!isMember) {
-        throw new AppError('You are not a member of this group', 403);
-      }
 
       // Get members with additional details
       const members = await prisma.groupMember.findMany({
@@ -87,31 +66,11 @@ router.post(
   '/:groupId/members',
   validateParams(groupIdParamSchema),
   validateBody(createMemberSchema),
+  checkGroupMembership,
   async (req: Request, res: Response, next) => {
     try {
-      const user = req.user!
       const groupId = req.params.groupId!; // Validated by middleware
       const { name } = req.body;
-
-      // Verify group exists and user is a member
-      const group = await prisma.group.findUnique({
-        where: { id: groupId },
-        include: {
-          members: true,
-        },
-      });
-
-      if (!group) {
-        throw new AppError('Group not found', 404);
-      }
-
-      const isMember = group.members.some(
-        (member) => member.userId === user.userId
-      );
-
-      if (!isMember) {
-        throw new AppError('You are not a member of this group', 403);
-      }
 
       // Create virtual person (userId = null)
       const member = await prisma.groupMember.create({
@@ -138,62 +97,43 @@ router.patch(
   '/:groupId/members/:memberId',
   validateParams(memberIdParamSchema),
   validateBody(updateMemberSchema),
+  checkGroupMembership,
   async (req: Request, res: Response, next) => {
     try {
-      const user = req.user! // Validated by middleware
-      const { groupId, memberId } = req.params;
-      const { name } = req.body;
-
-      // Verify group exists and user is a member
-      const group = await prisma.group.findUnique({
-        where: { id: groupId },
-        include: {
-          members: true,
-        },
-      });
-
-      if (!group) {
-        throw new AppError('Group not found', 404);
-      }
-
-      const currentUserMember = group.members.find(
-        (member) => member.userId === user.userId
-      );
-
-      if (!currentUserMember) {
-        throw new AppError('You are not a member of this group', 403);
-      }
-
-      // Find the member to update
-      const memberToUpdate = group.members.find((member) => member.id === memberId);
-
-      if (!memberToUpdate) {
-        throw new AppError('Member not found', 404);
-      }
-
-      // Check if member belongs to this group
-      if (memberToUpdate.groupId !== groupId) {
-        throw new AppError('Member does not belong to this group', 400);
-      }
+      const groupId = req.params!.groupId!; // Validated by middleware
+      const memberId = req.params!.memberId!;
+      const name = req.body.name as string;
+      const groupMembership = req.groupMembership!;
 
       // Only allow updating own name or if user is owner
-      const isOwner = currentUserMember.role === 'owner';
-      const isOwnProfile = memberToUpdate.id === currentUserMember.id;
-
+      const isOwner = groupMembership.role === 'owner';
+      const isOwnProfile = memberId === groupMembership.id;
       if (!isOwner && !isOwnProfile) {
-        throw new AppError(
-          'You can only update your own name unless you are the group owner',
-          403
-        );
+        res.status(403).json({ error: 'You can only update your own name unless you are the group owner' });
+        return;
       }
 
-      // Update member name
-      const updatedMember = await prisma.groupMember.update({
-        where: { id: memberId },
-        data: { name },
-      });
-
+      const updatedMember = await (async () => {
+        // update the member if they belong to the group
+        const result = await prisma.groupMember.updateMany({
+          where: { groupId: groupId, id: memberId },
+          data: { name: name }
+        });
+        if (result.count === 0) {
+          return null;
+        }
+        // return the updated member
+        const updatedMember = await prisma.groupMember.findUnique({
+          where: { id: memberId },
+        })
+        return updatedMember
+      })()
+      if (!updatedMember) {
+        res.status(404).json({ error: 'Member not found' });
+        return
+      }
       res.json({ member: updatedMember });
+
     } catch (error) {
       next(error);
     }
@@ -207,78 +147,42 @@ router.patch(
 router.delete(
   '/:groupId/members/:memberId',
   validateParams(memberIdParamSchema),
+  checkGroupMembership,
   async (req: Request, res: Response, next) => {
     try {
-      const user = req.user!
-
-      const { groupId, memberId } = req.params;
-
-      // Verify group exists and user is a member
-      const group = await prisma.group.findUnique({
-        where: { id: groupId },
-        include: {
-          members: true,
-        },
-      });
-
-      if (!group) {
-        throw new AppError('Group not found', 404);
-      }
-
-      const currentUserMember = group.members.find(
-        (member) => member.userId === user.userId
-      );
-
-      if (!currentUserMember) {
-        throw new AppError('You are not a member of this group', 403);
-      }
-
-      // Find the member to remove
-      const memberToRemove = group.members.find((member) => member.id === memberId);
-
-      if (!memberToRemove) {
-        throw new AppError('Member not found', 404);
-      }
-
-      // Check if member belongs to this group
-      if (memberToRemove.groupId !== groupId) {
-        throw new AppError('Member does not belong to this group', 400);
-      }
-
-      // Cannot remove the owner
-      if (memberToRemove.role === 'owner') {
-        throw new AppError('Cannot remove the group owner', 403);
-      }
+      const groupId = req.params!.groupId!; // Validated by middleware
+      const memberId = req.params!.memberId!;
+      const groupMembership = req.groupMembership!;
 
       // Only owner can remove other members, members can remove themselves
-      const isOwner = currentUserMember.role === 'owner';
-      const isLeavingSelf = memberToRemove.id === currentUserMember.id;
-
-      if (!isOwner && !isLeavingSelf) {
-        throw new AppError(
-          'Only the group owner can remove other members',
-          403
-        );
+      const isOwner = groupMembership.role === 'owner';
+      const isOwnProfile = memberId === groupMembership.id;
+      if (!isOwner && !isOwnProfile) {
+        res.status(403).json({ error: 'Only the group owner can remove other members' });
+        return;
       }
 
-      // Check if member has any expenses
-      const memberExpenses = await prisma.groupMember.findUnique({
-        where: { id: memberId },
+      // Check if member exists in group, has any expenses, or is the owner
+      const memberToRemove = await prisma.groupMember.findFirst({
+        where: { groupId: groupId, id: memberId },
         include: {
-          paidExpenses: true,
-          owedExpenses: true,
-        },
-      });
+          _count: {
+            select: { owedExpenses: true, paidExpenses: true }
+          }
+        }
+      })
 
-      if (
-        memberExpenses &&
-        (memberExpenses.paidExpenses.length > 0 ||
-          memberExpenses.owedExpenses.length > 0)
-      ) {
-        throw new AppError(
-          'Cannot remove member with existing expenses. Delete expenses first.',
-          409
-        );
+      if (!memberToRemove) {
+        res.status(404).json({ error: 'Member not found' });
+        return;
+      }
+      if (memberToRemove._count.paidExpenses > 0 || memberToRemove._count.owedExpenses > 0) {
+        res.status(409).json({ error: 'Cannot remove member with existing expenses. Delete expenses first.' });
+        return
+      }
+      if (memberToRemove.role === 'owner') {
+        res.status(403).json({ error: 'Cannot remove the group owner' });
+        return
       }
 
       // Delete member

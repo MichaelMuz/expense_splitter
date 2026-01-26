@@ -1,5 +1,14 @@
 import { type Request, type Response, type NextFunction } from 'express';
 import { prisma } from '../lib/prisma';
+import type { GroupMember } from '@prisma/client';
+
+declare global {
+    namespace Express {
+        interface Request {
+            groupMembership?: GroupMember;
+        }
+    }
+}
 
 /**
  * Middleware to check that the currently authenticated user is part of the group they are accessing
@@ -19,5 +28,6 @@ export async function checkGroupMembership(req: Request, res: Response, next: Ne
         res.status(403).json({ error: 'Not a member of this group' });
         return;
     }
+    req.groupMembership = membership;
     next();
 }
