@@ -370,7 +370,7 @@ router.delete(
         return;
       }
 
-      res.json({ message: 'Expense deleted successfully' });
+      res.status(204).send()
     } catch (error) {
       next(error);
     }

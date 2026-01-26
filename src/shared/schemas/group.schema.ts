@@ -20,6 +20,19 @@ export const inviteCodeParamSchema = z.object({
   inviteCode: z.string().uuid('Invalid invite code'),
 });
 
+export const joinInviteSchema = z.discriminatedUnion('type', [
+  z.object({
+    type: z.literal('claim'),
+    memberId: z.string().uuid('Invalid member id'),
+  }),
+  z.object({
+    type: z.literal('new'),
+    userName: z.string()
+      .min(1, 'Member name is required')
+      .max(100, 'Member name must be less than 100 characters'),
+  })
+]);
+
 // Member schemas
 export const memberIdParamSchema = z.object({
   groupId: z.string().uuid('Invalid group ID'),
@@ -47,3 +60,4 @@ export type InviteCodeParam = z.infer<typeof inviteCodeParamSchema>;
 export type MemberIdParam = z.infer<typeof memberIdParamSchema>;
 export type CreateMemberInput = z.infer<typeof createMemberSchema>;
 export type UpdateMemberInput = z.infer<typeof updateMemberSchema>;
+export type JoinInviteInput = z.infer<typeof joinInviteSchema>;
