@@ -37,12 +37,6 @@ const countSelect = {
   }
 } as const;
 
-const groupWithMembers = Prisma.validator<Prisma.GroupDefaultArgs>()({
-  include: {
-    ...memberSelect,
-  },
-});
-
 const groupWithMembersAndExpenseCount = Prisma.validator<Prisma.GroupDefaultArgs>()({
   include: {
     ...memberSelect,
