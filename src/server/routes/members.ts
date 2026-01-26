@@ -17,7 +17,6 @@ import { AppError } from '../middleware/error-handler';
 
 const router = Router();
 
-// All routes require authentication
 router.use(authenticateToken);
 
 /**
