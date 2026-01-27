@@ -12,6 +12,8 @@ import {
   memberIdParamSchema,
   createMemberSchema,
   updateMemberSchema,
+  type CreateMemberInput,
+  type UpdateMemberInput,
 } from '../../shared/schemas/group.schema';
 import { checkGroupMembership } from '../middleware/group-membership';
 
@@ -70,7 +72,8 @@ router.post(
   async (req: Request, res: Response, next) => {
     try {
       const groupId = req.params.groupId!; // Validated by middleware
-      const { name } = req.body;
+      const createMemberData = req.body as CreateMemberInput;
+      const { name } = createMemberData;
 
       // Create virtual person (userId = null)
       const member = await prisma.groupMember.create({
@@ -118,7 +121,8 @@ router.patch(
     try {
       const groupId = req.params!.groupId!; // Validated by middleware
       const memberId = req.params!.memberId!;
-      const name = req.body.name as string;
+      const updateMemberData = req.body as UpdateMemberInput;
+      const { name } = updateMemberData;
 
       const updatedMember = await (async () => {
         // update the member if they belong to the group

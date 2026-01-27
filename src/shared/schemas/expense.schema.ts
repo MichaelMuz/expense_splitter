@@ -4,6 +4,12 @@
 
 import { z } from 'zod';
 
+// Param validation schema
+export const expenseParamsSchema = z.object({
+  groupId: z.string().uuid('Invalid group ID'),
+  expenseId: z.string().uuid('Invalid expense ID'),
+});
+
 // Enums matching Prisma schema
 export const TaxTipTypeEnum = z.enum(['FIXED', 'PERCENTAGE']);
 export const SplitMethodEnum = z.enum(['EVEN', 'FIXED', 'PERCENTAGE']);
@@ -216,6 +222,7 @@ export const updateExpenseSchema = z
     { message: 'Percentage splits must sum to 100%', path: ['owers'] }
   );
 
+export type ExpenseParams = z.infer<typeof expenseParamsSchema>;
 export type CreateExpenseInput = z.infer<typeof createExpenseSchema>;
 export type UpdateExpenseInput = z.infer<typeof updateExpenseSchema>;
 export type PayerInput = z.infer<typeof payerSchema>;

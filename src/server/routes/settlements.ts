@@ -7,7 +7,7 @@ import { Router } from 'express';
 import { prisma } from '../lib/prisma';
 import { authenticateToken } from '../middleware/auth';
 import { validateBody, validateParams } from '../middleware/validate';
-import { createSettlementSchema, settlementParamsSchema } from '../../shared/schemas/settlement.schema';
+import { createSettlementSchema, settlementParamsSchema, type CreateSettlementInput } from '../../shared/schemas/settlement.schema';
 import {
   calculateNetBalances,
   getMemberBalances,
@@ -140,7 +140,8 @@ router.post(
     try {
       const groupId = req.params.groupId!; // Validated by middleware
       const userId = req.user!.userId;
-      const { fromGroupMemberId, toGroupMemberId, amount, recordedBy } = req.body;
+      const createSettlement = req.body as CreateSettlementInput
+      const { fromGroupMemberId, toGroupMemberId, amount, recordedBy } = createSettlement;
 
       // Verify all group member IDs belong to this group
       const memberIds = [fromGroupMemberId, toGroupMemberId, recordedBy];

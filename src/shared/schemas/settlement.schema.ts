@@ -27,4 +27,5 @@ export const createSettlementSchema = z
     { message: 'Cannot settle payment to yourself', path: ['toGroupMemberId'] }
   );
 
+export type SettlementParams = z.infer<typeof settlementParamsSchema>;
 export type CreateSettlementInput = z.infer<typeof createSettlementSchema>;

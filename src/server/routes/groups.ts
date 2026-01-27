@@ -11,6 +11,7 @@ import {
   createGroupSchema,
   groupIdParamSchema,
   type JoinInviteInput,
+  type CreateGroupInput,
   inviteCodeParamSchema,
   joinInviteSchema,
 } from '../../shared/schemas/group.schema';
@@ -78,7 +79,7 @@ router.post(
   validateBody(joinInviteSchema),
   async (req: Request, res: Response, next) => {
     try {
-      const user = req.user!
+      const user = req.user!;
       const { inviteCode } = req.params;
       const joinInput = req.body as JoinInviteInput;
 
@@ -157,9 +158,9 @@ router.post(
   validateBody(createGroupSchema),
   async (req: Request, res: Response, next) => {
     try {
-      const user = req.user! // checked in auth
-
-      const { name } = req.body;
+      const user = req.user!; // checked in auth
+      const createGroupData = req.body as CreateGroupInput;
+      const { name } = createGroupData;
 
       // Create group with owner as first member
       const group = await prisma.group.create({

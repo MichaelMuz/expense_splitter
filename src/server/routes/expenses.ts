@@ -8,8 +8,7 @@ import { prisma } from '../lib/prisma';
 import { checkGroupMembership } from '../middleware/group-membership';
 import { authenticateToken } from '../middleware/auth';
 import { validateBody, validateParams } from '../middleware/validate';
-import { createExpenseSchema, updateExpenseSchema, type CreateExpenseInput, type UpdateExpenseInput } from '../../shared/schemas/expense.schema';
-import { z } from 'zod';
+import { createExpenseSchema, updateExpenseSchema, type CreateExpenseInput, type UpdateExpenseInput, expenseParamsSchema } from '../../shared/schemas/expense.schema';
 import {
   calculateTotalExpenseAmount,
   calculatePayerAmounts,
@@ -19,17 +18,7 @@ import {
   type OwerData,
 } from '../../shared/utils/calculations';
 import { Prisma } from '@prisma/client';
-
-
-// Param validation schema
-const expenseParamsSchema = z.object({
-  groupId: z.string().uuid('Invalid group ID'),
-  expenseId: z.string().uuid('Invalid expense ID'),
-});
-
-const groupParamsSchema = z.object({
-  groupId: z.string().uuid('Invalid group ID'),
-});
+import { groupIdParamSchema } from '@/shared/schemas/group.schema';
 
 const expenseWithRelations = Prisma.validator<Prisma.ExpenseDefaultArgs>()({
   include: {
@@ -156,7 +145,7 @@ router.use(authenticateToken);
  */
 router.get(
   '/:groupId/expenses',
-  validateParams(groupParamsSchema),
+  validateParams(groupIdParamSchema),
   checkGroupMembership,
   async (req, res, next) => {
     try {
@@ -185,7 +174,7 @@ router.get(
  */
 router.post(
   '/:groupId/expenses',
-  validateParams(groupParamsSchema),
+  validateParams(groupIdParamSchema),
   validateBody(createExpenseSchema),
   checkGroupMembership,
   checkOwersPayersGroupMembership,

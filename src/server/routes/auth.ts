@@ -9,7 +9,7 @@ import { hashPassword, comparePassword } from '../lib/password';
 import { signToken } from '../lib/jwt';
 import { validateBody } from '../middleware/validate';
 import { authenticateToken } from '../middleware/auth';
-import { signupSchema, loginSchema } from '../../shared/schemas/auth.schema';
+import { signupSchema, loginSchema, type SignupInput, type LoginInput } from '../../shared/schemas/auth.schema';
 import { AppError } from '../middleware/error-handler';
 
 const router = Router();
@@ -26,7 +26,8 @@ router.post(
   validateBody(signupSchema),
   async (req: Request, res: Response, next) => {
     try {
-      const { email, password } = req.body;
+      const signupData = req.body as SignupInput;
+      const { email, password } = signupData;
 
       // Check if user already exists
       const existingUser = await prisma.user.findUnique({
@@ -75,7 +76,8 @@ router.post(
   validateBody(loginSchema),
   async (req: Request, res: Response, next) => {
     try {
-      const { email, password } = req.body;
+      const loginData = req.body as LoginInput;
+      const { email, password } = loginData;
 
       // Find user by email
       const user = await prisma.user.findUnique({
