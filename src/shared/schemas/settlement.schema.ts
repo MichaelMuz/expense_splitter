@@ -4,6 +4,11 @@
 
 import { z } from 'zod';
 
+export const settlementParamsSchema = z.object({
+  groupId: z.string().uuid('Invalid group ID'),
+  settlementId: z.string().uuid('Invalid settlement ID'),
+});
+
 export const createSettlementSchema = z
   .object({
     fromGroupMemberId: z.string().uuid('Invalid from member ID'),

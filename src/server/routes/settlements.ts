@@ -7,8 +7,7 @@ import { Router } from 'express';
 import { prisma } from '../lib/prisma';
 import { authenticateToken } from '../middleware/auth';
 import { validateBody, validateParams } from '../middleware/validate';
-import { createSettlementSchema } from '../../shared/schemas/settlement.schema';
-import { z } from 'zod';
+import { createSettlementSchema, settlementParamsSchema } from '../../shared/schemas/settlement.schema';
 import {
   calculateNetBalances,
   getMemberBalances,
@@ -16,32 +15,10 @@ import {
   type PayerData,
   type OwerData,
 } from '../../shared/utils/calculations';
+import { checkGroupMembership } from '../middleware/group-membership';
+import { groupIdParamSchema } from '@/shared/schemas/group.schema';
 
 const router = Router();
-
-// Param validation schema
-const settlementParamsSchema = z.object({
-  groupId: z.string().uuid('Invalid group ID'),
-  settlementId: z.string().uuid('Invalid settlement ID'),
-});
-
-const groupParamsSchema = z.object({
-  groupId: z.string().uuid('Invalid group ID'),
-});
-
-/**
- * Helper function to check if user is a member of a group
- * TODO find a way to reuse existing middleware
- */
-async function checkGroupMembership(userId: string, groupId: string) {
-  const membership = await prisma.groupMember.findFirst({
-    where: {
-      groupId,
-      userId,
-    },
-  });
-  return membership;
-}
 
 /**
  * GET /api/groups/:groupId/balances
@@ -50,18 +27,11 @@ async function checkGroupMembership(userId: string, groupId: string) {
 router.get(
   '/:groupId/balances',
   authenticateToken,
-  validateParams(groupParamsSchema),
+  validateParams(groupIdParamSchema),
+  checkGroupMembership,
   async (req, res, next) => {
     try {
       const groupId = req.params.groupId!; // Validated by middleware
-      const userId = req.user!.userId;
-
-      // Check membership
-      const membership = await checkGroupMembership(userId, groupId);
-      if (!membership) {
-        res.status(403).json({ error: 'Not a member of this group' });
-        return;
-      }
 
       // Fetch all expenses with payers and owers
       const expenses = await prisma.expense.findMany({
@@ -163,20 +133,14 @@ router.get(
 router.post(
   '/:groupId/settlements',
   authenticateToken,
-  validateParams(groupParamsSchema),
+  validateParams(groupIdParamSchema),
   validateBody(createSettlementSchema),
+  checkGroupMembership,
   async (req, res, next) => {
     try {
       const groupId = req.params.groupId!; // Validated by middleware
       const userId = req.user!.userId;
       const { fromGroupMemberId, toGroupMemberId, amount, recordedBy } = req.body;
-
-      // Check membership
-      const membership = await checkGroupMembership(userId, groupId);
-      if (!membership) {
-        res.status(403).json({ error: 'Not a member of this group' });
-        return;
-      }
 
       // Verify all group member IDs belong to this group
       const memberIds = [fromGroupMemberId, toGroupMemberId, recordedBy];
@@ -291,18 +255,11 @@ router.post(
 router.get(
   '/:groupId/settlements',
   authenticateToken,
-  validateParams(groupParamsSchema),
+  validateParams(groupIdParamSchema),
+  checkGroupMembership,
   async (req, res, next) => {
     try {
       const groupId = req.params.groupId!; // Validated by middleware
-      const userId = req.user!.userId;
-
-      // Check membership
-      const membership = await checkGroupMembership(userId, groupId);
-      if (!membership) {
-        res.status(403).json({ error: 'Not a member of this group' });
-        return;
-      }
 
       // Fetch all settlements
       const settlements = await prisma.settlement.findMany({
@@ -357,18 +314,11 @@ router.delete(
   '/:groupId/settlements/:settlementId',
   authenticateToken,
   validateParams(settlementParamsSchema),
+  checkGroupMembership,
   async (req, res, next) => {
     try {
       const groupId = req.params.groupId!; // Validated by middleware
       const settlementId = req.params.settlementId!; // Validated by middleware
-      const userId = req.user!.userId;
-
-      // Check membership
-      const membership = await checkGroupMembership(userId, groupId);
-      if (!membership) {
-        res.status(403).json({ error: 'Not a member of this group' });
-        return;
-      }
 
       // Verify settlement exists and belongs to this group
       const settlement = await prisma.settlement.findFirst({
