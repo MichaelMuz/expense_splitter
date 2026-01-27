@@ -10,7 +10,6 @@ import { validateBody, validateParams } from '../middleware/validate';
 import { createSettlementSchema, settlementParamsSchema, type CreateSettlementInput } from '../../shared/schemas/settlement.schema';
 import {
   calculateNetBalances,
-  getMemberBalances,
   type ExpenseData,
   type PayerData,
   type OwerData,
