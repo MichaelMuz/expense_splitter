@@ -10,7 +10,6 @@ import { signToken } from '../lib/jwt';
 import { validateBody } from '../middleware/validate';
 import { authenticateToken } from '../middleware/auth';
 import { signupSchema, loginSchema, type SignupInput, type LoginInput } from '../../shared/schemas/auth.schema';
-import { AppError } from '../middleware/error-handler';
 
 const router = Router();
 
@@ -35,7 +34,8 @@ router.post(
       });
 
       if (existingUser) {
-        throw new AppError('User with this email already exists', 409);
+        res.status(409).json({ error: 'User with this email already exists' });
+        return;
       }
 
       // Hash password and create user
@@ -85,13 +85,15 @@ router.post(
       });
 
       if (!user) {
-        throw new AppError('Invalid email or password', 401);
+        res.status(401).json({ error: 'Invalid email or password' });
+        return;
       }
 
       // Verify password
       const isValidPassword = await comparePassword(password, user.password);
       if (!isValidPassword) {
-        throw new AppError('Invalid email or password', 401);
+        res.status(401).json({ error: 'Invalid email or password' });
+        return;
       }
 
       // Generate JWT token
@@ -124,7 +126,8 @@ router.get(
   async (req: Request, res: Response, next) => {
     try {
       if (!req.user) {
-        throw new AppError('Not authenticated', 401);
+        res.status(401).json({ error: 'Not authenticated' });
+        return;
       }
 
       const user = await prisma.user.findUnique({
@@ -132,7 +135,8 @@ router.get(
       });
 
       if (!user) {
-        throw new AppError('User not found', 404);
+        res.status(404).json({ error: 'User not found' });
+        return;
       }
 
       res.json({
