@@ -3,7 +3,7 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import type { CreateSettlementInput } from '../../shared/schemas/settlement.schema';
+import type { CreateSettlementInput } from '../../shared/schemas/settlement';
 
 // API response types
 export interface Settlement {

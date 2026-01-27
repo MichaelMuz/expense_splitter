@@ -14,7 +14,7 @@ import {
   type CreateGroupInput,
   inviteCodeParamSchema,
   joinInviteSchema,
-} from '../../shared/schemas/group.schema';
+} from '../../shared/schemas/group';
 import { assertUnreachable } from '@/shared/utils/type-helpers';
 
 const groupWithMembersAndExpenseCount = {

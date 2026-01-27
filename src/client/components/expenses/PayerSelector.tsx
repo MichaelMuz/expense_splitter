@@ -4,7 +4,7 @@
 
 import { useState } from 'react';
 import { toCents, toDollars } from '../../../shared/utils/currency';
-import type { PayerInput } from '../../../shared/schemas/expense.schema';
+import type { PayerInput } from '../../../shared/schemas/expense';
 
 type SplitMethod = 'EVEN' | 'FIXED' | 'PERCENTAGE';
 

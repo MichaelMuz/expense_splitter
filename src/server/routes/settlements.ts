@@ -7,9 +7,9 @@ import { Router } from 'express';
 import { prisma } from '../lib/prisma';
 import { authenticateToken } from '../middleware/auth';
 import { validateBody, validateParams } from '../middleware/validate';
-import { createSettlementSchema, settlementParamsSchema, type CreateSettlementInput } from '../../shared/schemas/settlement.schema';
+import { createSettlementSchema, settlementParamsSchema, type CreateSettlementInput } from '../../shared/schemas/settlement';
 import { checkGroupMembership } from '../middleware/group-membership';
-import { groupIdParamSchema } from '@/shared/schemas/group.schema';
+import { groupIdParamSchema } from '@/shared/schemas/group';
 
 const router = Router();
 

@@ -4,7 +4,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../lib/api';
-import type { CreateGroupInput } from '@shared/schemas/group.schema';
+import type { CreateGroupInput } from '@/shared/schemas/group';
 
 interface GroupMember {
   id: string;

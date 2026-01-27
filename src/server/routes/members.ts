@@ -14,7 +14,7 @@ import {
   updateMemberSchema,
   type CreateMemberInput,
   type UpdateMemberInput,
-} from '../../shared/schemas/group.schema';
+} from '../../shared/schemas/group';
 import { checkGroupMembership } from '../middleware/group-membership';
 
 const router = Router();

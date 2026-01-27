@@ -3,7 +3,7 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import type { CreateExpenseInput, UpdateExpenseInput } from '../../shared/schemas/expense.schema';
+import type { CreateExpenseInput, UpdateExpenseInput } from '../../shared/schemas/expense';
 
 // API response types
 export interface ExpensePayer {

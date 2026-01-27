@@ -8,7 +8,7 @@ import { prisma } from '../lib/prisma';
 import { checkGroupMembership } from '../middleware/group-membership';
 import { authenticateToken } from '../middleware/auth';
 import { validateBody, validateParams } from '../middleware/validate';
-import { createExpenseSchema, updateExpenseSchema, type CreateExpenseInput, type UpdateExpenseInput, expenseParamsSchema } from '../../shared/schemas/expense.schema';
+import { createExpenseSchema, updateExpenseSchema, type CreateExpenseInput, type UpdateExpenseInput, expenseParamsSchema } from '../../shared/schemas/expense';
 import {
   calculateTotalExpenseAmount,
   calculatePayerAmounts,
@@ -18,7 +18,7 @@ import {
   type OwerData,
 } from '../../shared/utils/calculations';
 import { Prisma } from '@prisma/client';
-import { groupIdParamSchema } from '@/shared/schemas/group.schema';
+import { groupIdParamSchema } from '@/shared/schemas/group';
 
 const expenseWithRelations = Prisma.validator<Prisma.ExpenseDefaultArgs>()({
   include: {

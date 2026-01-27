@@ -8,7 +8,7 @@ import { useGroup } from '../hooks/useGroups';
 import { useCreateSettlement } from '../hooks/useSettlements';
 import { useAuth } from '../hooks/useAuth';
 import { toDollars } from '@shared/utils/currency';
-import type { CreateSettlementInput } from '@shared/schemas/settlement.schema';
+import type { CreateSettlementInput } from '@/shared/schemas/settlement';
 
 export default function SettlementPage() {
   const { groupId } = useParams<{ groupId: string }>();

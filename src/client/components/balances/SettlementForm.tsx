@@ -4,7 +4,7 @@
 
 import { useState } from 'react';
 import { toCents, toDollars, formatCurrency } from '../../../shared/utils/currency';
-import type { CreateSettlementInput } from '../../../shared/schemas/settlement.schema';
+import type { CreateSettlementInput } from '../../../shared/schemas/settlement';
 
 interface Member {
   id: string;

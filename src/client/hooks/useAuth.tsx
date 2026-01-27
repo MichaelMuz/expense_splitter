@@ -6,7 +6,7 @@ import { createContext, useContext, useState, useEffect, type ReactNode } from '
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '../lib/api';
 import { setToken, getToken, removeToken, type User, type AuthResponse } from '../lib/auth';
-import type { LoginInput, SignupInput } from '@shared/schemas/auth.schema';
+import type { LoginInput, SignupInput } from '@/shared/schemas/auth';
 
 interface AuthContextValue {
   user: User | null;

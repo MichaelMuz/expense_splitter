@@ -7,7 +7,7 @@ import { toCents, toDollars } from '../../../shared/utils/currency';
 import { SplitMethodPicker } from './SplitMethodPicker';
 import { PayerSelector } from './PayerSelector';
 import { OwerSelector } from './OwerSelector';
-import type { CreateExpenseInput, PayerInput, OwerInput } from '../../../shared/schemas/expense.schema';
+import type { CreateExpenseInput, PayerInput, OwerInput } from '../../../shared/schemas/expense';
 
 type SplitMethod = 'EVEN' | 'FIXED' | 'PERCENTAGE';
 type TaxTipType = 'FIXED' | 'PERCENTAGE';
