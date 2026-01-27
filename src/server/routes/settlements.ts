@@ -148,7 +148,8 @@ router.delete(
   async (req, res, next) => {
     try {
       const groupId = req.params.groupId!; // Validated by middleware
-      const settlementId = req.params.settlementId!; // Validated by middleware
+      const settlementId = req.params.settlementId!;
+      const groupMembership = req.groupMembership!;
 
       // Verify settlement exists and belongs to this group
       const settlement = await prisma.settlement.findFirst({
@@ -162,13 +163,18 @@ router.delete(
         res.status(404).json({ error: 'Settlement not found' });
         return;
       }
+      const canDelete = (groupMembership.role === 'owner' || [settlement.fromGroupMemberId, settlement.toGroupMemberId, settlement.recordedBy].includes(groupMembership.id));
+      if (!canDelete) {
+        res.status(403).json({ error: 'You can only delete a settlement if you are the recorder, sender, receiver, or owner of the group' });
+        return;
+      }
 
       // Delete settlement
       await prisma.settlement.delete({
         where: { id: settlementId },
       });
 
-      res.json({ message: 'Settlement deleted successfully' });
+      res.status(204).send()
     } catch (error) {
       next(error);
     }
