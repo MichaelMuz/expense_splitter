@@ -8,12 +8,6 @@ import { prisma } from '../lib/prisma';
 import { authenticateToken } from '../middleware/auth';
 import { validateBody, validateParams } from '../middleware/validate';
 import { createSettlementSchema, settlementParamsSchema, type CreateSettlementInput } from '../../shared/schemas/settlement.schema';
-import {
-  calculateNetBalances,
-  type ExpenseData,
-  type PayerData,
-  type OwerData,
-} from '../../shared/utils/calculations';
 import { checkGroupMembership } from '../middleware/group-membership';
 import { groupIdParamSchema } from '@/shared/schemas/group.schema';
 
@@ -32,12 +26,12 @@ router.post(
   async (req, res, next) => {
     try {
       const groupId = req.params.groupId!; // Validated by middleware
-      const userId = req.user!.userId;
+      const groupMembership = req.groupMembership!;
       const createSettlement = req.body as CreateSettlementInput
-      const { fromGroupMemberId, toGroupMemberId, amount, recordedBy } = createSettlement;
+      const { fromGroupMemberId, toGroupMemberId, amount } = createSettlement;
 
       // Verify all group member IDs belong to this group
-      const memberIds = [fromGroupMemberId, toGroupMemberId, recordedBy];
+      const memberIds = [fromGroupMemberId, toGroupMemberId];
       const members = await prisma.groupMember.findMany({
         where: {
           id: { in: memberIds },
@@ -50,64 +44,6 @@ router.post(
         return;
       }
 
-      // Verify the recorder is the current user's member in this group
-      const recorderMember = members.find((m) => m.id === recordedBy);
-      if (!recorderMember || recorderMember.userId !== userId) {
-        res.status(403).json({ error: 'You can only record settlements as yourself' });
-        return;
-      }
-
-      // Fetch current balances to check if settlement makes sense
-      const expenses = await prisma.expense.findMany({
-        where: { groupId },
-        include: {
-          payers: true,
-          owers: true,
-        },
-      });
-
-      const settlements = await prisma.settlement.findMany({
-        where: { groupId },
-      });
-
-      const expenseData = expenses.map((expense) => ({
-        expense: {
-          baseAmount: expense.baseAmount,
-          taxAmount: expense.taxAmount,
-          taxType: expense.taxType,
-          tipAmount: expense.tipAmount,
-          tipType: expense.tipType,
-        } as ExpenseData,
-        payers: expense.payers.map((p) => ({
-          groupMemberId: p.groupMemberId,
-          splitMethod: p.splitMethod,
-          splitValue: p.splitValue,
-        })) as PayerData[],
-        owers: expense.owers.map((o) => ({
-          groupMemberId: o.groupMemberId,
-          splitMethod: o.splitMethod,
-          splitValue: o.splitValue,
-        })) as OwerData[],
-      }));
-
-      const settlementData = settlements.map((s) => ({
-        fromGroupMemberId: s.fromGroupMemberId,
-        toGroupMemberId: s.toGroupMemberId,
-        amount: s.amount,
-      }));
-
-      const netBalances = calculateNetBalances(expenseData, settlementData);
-      const balanceKey = `${fromGroupMemberId}->${toGroupMemberId}`;
-      const currentDebt = netBalances.get(balanceKey) || 0;
-
-      // Warning if settlement is more than current debt (but allow it)
-      if (amount > currentDebt && currentDebt > 0) {
-        // This is just informational - we still allow the settlement
-        console.warn(
-          `Settlement amount (${amount}) exceeds current debt (${currentDebt}). This may create a reverse debt.`
-        );
-      }
-
       // Create settlement
       const settlement = await prisma.settlement.create({
         data: {
@@ -115,7 +51,7 @@ router.post(
           fromGroupMemberId,
           toGroupMemberId,
           amount,
-          recordedBy,
+          recordedBy: groupMembership.id,
         },
         include: {
           fromMember: {

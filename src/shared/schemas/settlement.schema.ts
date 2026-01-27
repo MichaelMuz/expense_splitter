@@ -17,7 +17,6 @@ export const createSettlementSchema = z
       .number()
       .int('Amount must be in cents (integer)')
       .positive('Amount must be positive'),
-    recordedBy: z.string().uuid('Invalid recorded by member ID'),
   })
   .refine(
     (data) => {
