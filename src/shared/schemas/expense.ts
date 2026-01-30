@@ -68,14 +68,21 @@ function bothTaxTipOrNeither<K1 extends string, K2 extends string>(
   );
 }
 
-function applyExpenseRefinements<T extends z.ZodType<Partial<z.infer<typeof expenseBaseSchema>>>>(schema: T) {
-  return schema
-    .refine(...bothTaxTipOrNeither('Tax', 'taxAmount', 'taxType'))
-    .refine(...bothTaxTipOrNeither('Tip', 'tipAmount', 'tipType'))
-    .refine(
-      (data) => {
-        // For FIXED payers, sum must match total expense amount
-        if (data.payers && data.baseAmount && data.payers.length > 0 && data.payers[0]?.splitMethod === 'FIXED') {
+function fixedSumsCorrectly(participantType: 'payers' | 'owers') {
+  return tuple(
+    (data: Partial<z.infer<typeof expenseBaseSchema>>) => {
+      const participants = data[participantType];
+      // TODO: We can get rid of this if we eventually move to mixed splitability in the future
+      // require participant updates also update base amount to not break fixes split methods invariants
+      if (!!participants !== !!data.baseAmount) { return false }
+      // they can be both undefined for an update
+      else if (!participants || !data.baseAmount) { return true }
+
+
+      if (participants.length > 0 && participants[0]?.splitMethod === 'FIXED') {
+        const sum = participants.reduce((sum, p) => sum + (p.splitValue || 0), 0);
+
+        if (participantType === 'payers') {
           const total = calculateTotalExpenseAmount({
             baseAmount: data.baseAmount,
             taxAmount: data.taxAmount,
@@ -83,25 +90,26 @@ function applyExpenseRefinements<T extends z.ZodType<Partial<z.infer<typeof expe
             tipAmount: data.tipAmount,
             tipType: data.tipType,
           });
+          return sum === total;
+        } else {
+          return sum === data.baseAmount;
+        }
+      }
+      return true;
+    },
+    {
+      message: `Fixed ${participantType} must sum correctly and require base amount to be specified`,
+      path: [participantType]
+    }
+  );
+}
 
-          const payerSum = data.payers.reduce((sum, p) => sum + (p.splitValue || 0), 0);
-          return payerSum === total;
-        }
-        return true;
-      },
-      { message: 'Fixed payer amounts must sum to total expense amount', path: ['payers'] }
-    )
-    .refine(
-      (data) => {
-        // For FIXED owers, sum must match base amount
-        if (data.owers && data.baseAmount && data.owers.length > 0 && data.owers[0]?.splitMethod === 'FIXED') {
-          const owerSum = data.owers.reduce((sum, o) => sum + (o.splitValue || 0), 0);
-          return owerSum === data.baseAmount;
-        }
-        return true;
-      },
-      { message: 'Fixed ower amounts must sum to base amount', path: ['owers'] }
-    );
+function applyExpenseRefinements<T extends z.ZodType<Partial<z.infer<typeof expenseBaseSchema>>>>(schema: T) {
+  return schema
+    .refine(...bothTaxTipOrNeither('Tax', 'taxAmount', 'taxType'))
+    .refine(...bothTaxTipOrNeither('Tip', 'tipAmount', 'tipType'))
+    .refine(...fixedSumsCorrectly('payers'))
+    .refine(...fixedSumsCorrectly('owers'))
 }
 
 
