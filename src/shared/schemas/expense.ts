@@ -48,7 +48,7 @@ function expenseParticipants(type: "payers" | "owers") {
     )
 }
 
-function bothTaxTipOrNeither<K1 extends string, K2 extends string>(
+function RefinebothTaxTipOrNeither<K1 extends string, K2 extends string>(
   fieldName: 'Tax' | 'Tip',
   amountKey: K1,
   typeKey: K2,
@@ -81,10 +81,10 @@ export const createExpenseSchema = z
     owers: expenseParticipants("owers")
   })
   .refine(
-    ...bothTaxTipOrNeither('Tax', 'taxAmount', 'taxType')
+    ...RefinebothTaxTipOrNeither('Tax', 'taxAmount', 'taxType')
   )
   .refine(
-    ...bothTaxTipOrNeither('Tip', 'tipAmount', 'tipType')
+    ...RefinebothTaxTipOrNeither('Tip', 'tipAmount', 'tipType')
   )
   .refine(
     (data) => {
