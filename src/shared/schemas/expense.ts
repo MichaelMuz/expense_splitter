@@ -110,7 +110,6 @@ const expenseBaseSchema = z
     name: expenseName,
     description: z.string().max(1000, 'Description must be less than 1000 characters').optional(),
     baseAmount: money,
-    // TODO: Do we need the nullable in the create?
     taxAmount: money.nullable().optional(),
     taxType: TaxTipTypeEnum.nullable().optional(),
     tipAmount: money.nullable().optional(),
