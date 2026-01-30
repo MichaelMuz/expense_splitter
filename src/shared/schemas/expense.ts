@@ -3,30 +3,64 @@
  */
 
 import { z } from 'zod';
+import { uuid, splitValue, money } from './fields';
+import { tuple } from '../utils/type-helpers';
 
 // Param validation schema
 export const expenseParamsSchema = z.object({
-  groupId: z.string().uuid('Invalid group ID'),
-  expenseId: z.string().uuid('Invalid expense ID'),
+  groupId: uuid('Invalid group ID'),
+  expenseId: uuid('Invalid expense ID'),
 });
 
 // Enums matching Prisma schema
 export const TaxTipTypeEnum = z.enum(['FIXED', 'PERCENTAGE']);
 export const SplitMethodEnum = z.enum(['EVEN', 'FIXED', 'PERCENTAGE']);
 
-// Payer schema
-export const payerSchema = z.object({
-  groupMemberId: z.string().uuid('Invalid group member ID'),
+// Payer and Ower schema
+export const expenseParticipant = z.object({
+  groupMemberId: uuid('Invalid group member ID'),
   splitMethod: SplitMethodEnum,
-  splitValue: z.number().int().nullable().optional(),
+  splitValue: splitValue,
 });
 
-// Ower schema
-export const owerSchema = z.object({
-  groupMemberId: z.string().uuid('Invalid group member ID'),
-  splitMethod: SplitMethodEnum,
-  splitValue: z.number().int().nullable().optional(),
-});
+function expenseParticipants(type: "payers" | "owers") {
+  return z
+    .array(expenseParticipant)
+    .min(1, `At least one ${type} is required`)
+    .refine(
+      (participants) => {
+        // All payers must use the same split method
+        const methods = participants.map((p) => p.splitMethod);
+        return methods.every((m) => m === methods[0]);
+      },
+      { message: 'All payers must use the same split method' }
+    )
+    .refine(
+      (participants) => {
+        // Validate PERCENTAGE sums to 10000 (100.00%)
+        if (participants.length > 0 && participants[0]?.splitMethod === 'PERCENTAGE') {
+          const total = participants.reduce((sum, p) => sum + (p.splitValue || 0), 0);
+          return total === 10000;
+        }
+        return true;
+      },
+      { message: 'Percentage splits must sum to 100%' }
+    )
+}
+
+function bothTaxTipOrNeither<K1 extends string, K2 extends string>(
+  fieldName: 'Tax' | 'Tip',
+  amountKey: K1,
+  typeKey: K2,
+) {
+  return tuple(
+    (data: Partial<Record<K1 | K2, unknown>>) => !!data[amountKey] === !!data[typeKey],
+    {
+      message: `${fieldName} requires both amount and type, or neither`,
+      path: [typeKey]  // error points to the type field
+    }
+  );
+}
 
 // TODO: We have a lot of repeat logic here, should be dry'd up
 // Create expense schema
@@ -37,78 +71,20 @@ export const createExpenseSchema = z
       .min(1, 'Expense name is required')
       .max(200, 'Expense name must be less than 200 characters'),
     description: z.string().max(1000, 'Description must be less than 1000 characters').optional(),
-    baseAmount: z
-      .number()
-      .int('Base amount must be in cents (integer)')
-      .positive('Base amount must be positive'),
-    taxAmount: z.number().int('Tax amount must be in cents or basis points (integer)').nullable().optional(),
+    baseAmount: money,
+    // TODO: Do we need the nullable in the create?
+    taxAmount: money.nullable().optional(),
     taxType: TaxTipTypeEnum.nullable().optional(),
-    tipAmount: z.number().int('Tip amount must be in cents or basis points (integer)').nullable().optional(),
+    tipAmount: money.nullable().optional(),
     tipType: TaxTipTypeEnum.nullable().optional(),
-    payers: z
-      .array(payerSchema)
-      .min(1, 'At least one payer is required')
-      .refine(
-        (payers) => {
-          // All payers must use the same split method
-          const methods = payers.map((p) => p.splitMethod);
-          return methods.every((m) => m === methods[0]);
-        },
-        { message: 'All payers must use the same split method' }
-      )
-      .refine(
-        (payers) => {
-          // Validate PERCENTAGE sums to 10000 (100.00%)
-          if (payers.length > 0 && payers[0]?.splitMethod === 'PERCENTAGE') {
-            const total = payers.reduce((sum, p) => sum + (p.splitValue || 0), 0);
-            return total === 10000;
-          }
-          return true;
-        },
-        { message: 'Percentage splits must sum to 100%' }
-      ),
-    owers: z
-      .array(owerSchema)
-      .min(1, 'At least one ower is required')
-      .refine(
-        (owers) => {
-          // All owers must use the same split method
-          const methods = owers.map((o) => o.splitMethod);
-          return methods.every((m) => m === methods[0]);
-        },
-        { message: 'All owers must use the same split method' }
-      )
-      .refine(
-        (owers) => {
-          // Validate PERCENTAGE sums to 10000 (100.00%)
-          if (owers.length > 0 && owers[0]?.splitMethod === 'PERCENTAGE') {
-            const total = owers.reduce((sum, o) => sum + (o.splitValue || 0), 0);
-            return total === 10000;
-          }
-          return true;
-        },
-        { message: 'Percentage splits must sum to 100%' }
-      ),
+    payers: expenseParticipants("payers"),
+    owers: expenseParticipants("owers")
   })
   .refine(
-    (data) => {
-      // If taxAmount is provided, taxType must be provided
-      if (data.taxAmount && !data.taxType) {
-        return false;
-      }
-      return true;
-    },
-    { message: 'Tax type is required when tax amount is provided', path: ['taxType'] }
+    ...bothTaxTipOrNeither('Tax', 'taxAmount', 'taxType')
   )
   .refine(
-    (data) => {
-      // If tipAmount is provided, tipType must be provided
-      if (data.tipAmount && !data.tipType) {
-        return false;
-      }
-      return true;
-    },
-    { message: 'Tip type is required when tip amount is provided', path: ['tipType'] }
+    ...bothTaxTipOrNeither('Tip', 'tipAmount', 'tipType')
   )
   .refine(
     (data) => {
@@ -169,11 +145,11 @@ export const updateExpenseSchema = z
     tipAmount: z.number().int('Tip amount must be in cents or basis points (integer)').nullable().optional(),
     tipType: TaxTipTypeEnum.nullable().optional(),
     payers: z
-      .array(payerSchema)
+      .array(expenseParticipant)
       .min(1, 'At least one payer is required')
       .optional(),
     owers: z
-      .array(owerSchema)
+      .array(expenseParticipant)
       .min(1, 'At least one ower is required')
       .optional(),
   })
@@ -225,5 +201,5 @@ export const updateExpenseSchema = z
 export type ExpenseParams = z.infer<typeof expenseParamsSchema>;
 export type CreateExpenseInput = z.infer<typeof createExpenseSchema>;
 export type UpdateExpenseInput = z.infer<typeof updateExpenseSchema>;
-export type PayerInput = z.infer<typeof payerSchema>;
-export type OwerInput = z.infer<typeof owerSchema>;
+export type PayerInput = z.infer<typeof expenseParticipant>;
+export type OwerInput = z.infer<typeof expenseParticipant>;
