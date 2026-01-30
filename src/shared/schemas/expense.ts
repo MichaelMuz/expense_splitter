@@ -5,6 +5,7 @@
 import { z } from 'zod';
 import { uuid, splitValue, money } from './fields';
 import { tuple } from '../utils/type-helpers';
+import { calculateTotalExpenseAmount } from '../utils/calculations';
 
 // Param validation schema
 export const expenseParamsSchema = z.object({
@@ -86,26 +87,17 @@ export const createExpenseSchema = z
   .refine(
     ...RefinebothTaxTipOrNeither('Tip', 'tipAmount', 'tipType')
   )
-  .refine(
+.refine(
     (data) => {
       // For FIXED payers, sum must match total expense amount
       if (data.payers.length > 0 && data.payers[0]?.splitMethod === 'FIXED') {
-        // Calculate total expense
-        let total = data.baseAmount;
-        if (data.taxAmount) {
-          if (data.taxType === 'PERCENTAGE') {
-            total += Math.round((data.baseAmount * data.taxAmount) / 10000);
-          } else {
-            total += data.taxAmount;
-          }
-        }
-        if (data.tipAmount) {
-          if (data.tipType === 'PERCENTAGE') {
-            total += Math.round((data.baseAmount * data.tipAmount) / 10000);
-          } else {
-            total += data.tipAmount;
-          }
-        }
+        const total = calculateTotalExpenseAmount({
+          baseAmount: data.baseAmount,
+          taxAmount: data.taxAmount,
+          taxType: data.taxType,
+          tipAmount: data.tipAmount,
+          tipType: data.tipType,
+        });
 
         const payerSum = data.payers.reduce((sum, p) => sum + (p.splitValue || 0), 0);
         return payerSum === total;
