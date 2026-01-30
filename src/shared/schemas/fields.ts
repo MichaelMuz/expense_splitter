@@ -1,5 +1,5 @@
 /**
- * Resusable zod fields
+ * Reusable zod fields
  */
 
 import { z } from 'zod';
