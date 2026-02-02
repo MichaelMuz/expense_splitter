@@ -14,6 +14,7 @@ export const expenseParamsSchema = z.object({
 });
 
 // Enums matching Prisma schema
+// TODO Would be really cool to use postgres data validation features for things like this
 export const TaxTipTypeEnum = z.enum(['FIXED', 'PERCENTAGE']);
 export const SplitMethodEnum = z.enum(['EVEN', 'FIXED', 'PERCENTAGE']);
 
