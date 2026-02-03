@@ -3,7 +3,9 @@
  * All amounts are in cents (integers) for precision.
  */
 
+import type { TaxTipType } from '@prisma/client';
 import type { ExpenseData, PayerInput, OwerInput } from '../schemas/expense';
+import { assertUnreachable } from './type-helpers';
 
 /**
  * Calculate the total expense amount including tax and tip
@@ -11,31 +13,19 @@ import type { ExpenseData, PayerInput, OwerInput } from '../schemas/expense';
  * @returns Total amount in cents
  */
 export function calculateTotalExpenseAmount(expense: ExpenseData): number {
-  let total = expense.baseAmount;
-
-  // Add tax
-  if (expense.taxAmount) {
-    if (expense.taxType === 'PERCENTAGE') {
-      // taxAmount is in basis points (0-10000 = 0%-100%)
-      total += Math.round((expense.baseAmount * expense.taxAmount) / 10000);
-    } else {
-      // taxAmount is in cents
-      total += expense.taxAmount;
+  const calc = (amount?: number | null, type?: TaxTipType | null) => {
+    if (amount) {
+      if (type === 'PERCENTAGE') {
+        // tax/tip amount is in basis points (0-10000 = 0%-100%)
+        return Math.round((expense.baseAmount * amount) / 10000);
+      } else {
+        // tax/tip amount is in cents
+        return amount;
+      }
     }
+    return 0;
   }
-
-  // Add tip
-  if (expense.tipAmount) {
-    if (expense.tipType === 'PERCENTAGE') {
-      // tipAmount is in basis points (0-10000 = 0%-100%)
-      total += Math.round((expense.baseAmount * expense.tipAmount) / 10000);
-    } else {
-      // tipAmount is in cents
-      total += expense.tipAmount;
-    }
-  }
-
-  return total;
+  return expense.baseAmount + calc(expense.taxAmount, expense.taxType) + calc(expense.tipAmount, expense.tipType)
 }
 
 /**
@@ -51,15 +41,11 @@ export function calculatePayerAmounts(
   const results = new Map<string, number>();
   const totalAmount = calculateTotalExpenseAmount(expense);
 
-  if (payers.length === 0) {
-    return results;
-  }
-
-  // Check if all payers use the same split method
+  // zod validation ensures all split methods are the same
   const firstMethod = payers[0]?.splitMethod;
-  const allSameMethod = firstMethod ? payers.every((p) => p.splitMethod === firstMethod) : false;
 
-  if (allSameMethod && firstMethod === 'EVEN') {
+  if (!firstMethod) {
+  } else if (firstMethod === 'EVEN') {
     // Even split - divide total equally
     const perPayer = Math.floor(totalAmount / payers.length);
     const remainder = totalAmount - perPayer * payers.length;
@@ -69,12 +55,12 @@ export function calculatePayerAmounts(
       const amount = index === 0 ? perPayer + remainder : perPayer;
       results.set(payer.groupMemberId, amount);
     });
-  } else if (allSameMethod && firstMethod === 'FIXED') {
+  } else if (firstMethod === 'FIXED') {
     // Fixed amounts - use as-is
     payers.forEach((payer) => {
       results.set(payer.groupMemberId, payer.splitValue || 0);
     });
-  } else if (allSameMethod && firstMethod === 'PERCENTAGE') {
+  } else if (firstMethod === 'PERCENTAGE') {
     // Percentage split - calculate proportional amounts
     let remaining = totalAmount;
     const sortedPayers = [...payers].sort((a, b) =>
@@ -92,7 +78,7 @@ export function calculatePayerAmounts(
         remaining -= amount;
       }
     });
-  }
+  } else { assertUnreachable(firstMethod) }
 
   return results;
 }
