@@ -4,7 +4,6 @@
 
 import { z } from 'zod';
 
-// Group schemas
 export const createGroupSchema = z.object({
   name: z
     .string()
@@ -20,6 +19,11 @@ export const inviteCodeParamSchema = z.object({
   inviteCode: z.string().uuid('Invalid invite code'),
 });
 
+const memberName = z
+  .string()
+  .min(1, 'Member name is required')
+  .max(100, 'Member name must be less than 100 characters');
+
 export const joinInviteSchema = z.discriminatedUnion('type', [
   z.object({
     type: z.literal('claim'),
@@ -27,9 +31,7 @@ export const joinInviteSchema = z.discriminatedUnion('type', [
   }),
   z.object({
     type: z.literal('new'),
-    userName: z.string()
-      .min(1, 'Member name is required')
-      .max(100, 'Member name must be less than 100 characters'),
+    userName: memberName,
   })
 ]);
 
@@ -40,17 +42,11 @@ export const memberIdParamSchema = z.object({
 });
 
 export const createMemberSchema = z.object({
-  name: z
-    .string()
-    .min(1, 'Member name is required')
-    .max(100, 'Member name must be less than 100 characters'),
+  name: memberName,
 });
 
 export const updateMemberSchema = z.object({
-  name: z
-    .string()
-    .min(1, 'Member name is required')
-    .max(100, 'Member name must be less than 100 characters'),
+  name: memberName,
 });
 
 // Type exports

@@ -3,8 +3,11 @@
  */
 
 import { z } from 'zod';
-import { email } from './fields';
 
+const email = z
+  .string()
+  .email('Invalid email address')
+  .min(1, 'Email is required')
 
 export const signupSchema = z.object({
   email: email,

@@ -3,9 +3,16 @@
  */
 
 import { z } from 'zod';
-import { uuid, splitValue, money } from './fields';
 import { tuple } from '../utils/type-helpers';
 import { calculateTotalExpenseAmount } from '../utils/calculations';
+
+function uuid(message?: string) {
+  return z.string().uuid(message || 'Invalid ID')
+}
+const money = z
+  .number()
+  .int('Money amount must be in cents or basis points (integer)')
+  .positive('Money amount must be positive')
 
 // Param validation schema
 export const expenseParamsSchema = z.object({
@@ -22,7 +29,7 @@ export const SplitMethodEnum = z.enum(['EVEN', 'FIXED', 'PERCENTAGE']);
 export const expenseParticipant = z.object({
   groupMemberId: uuid('Invalid group member ID'),
   splitMethod: SplitMethodEnum,
-  splitValue: splitValue,
+  splitValue: z.number().int().nullable().optional(),
 });
 
 const expenseName = z
