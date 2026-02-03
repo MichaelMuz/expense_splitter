@@ -3,28 +3,7 @@
  * All amounts are in cents (integers) for precision.
  */
 
-import type { TaxTipType, SplitMethod } from '@prisma/client';
-
-// Type definitions for calculation inputs
-export interface ExpenseData {
-  baseAmount: number; // cents
-  taxAmount?: number | null; // cents or percentage (0-10000)
-  taxType?: TaxTipType | null;
-  tipAmount?: number | null; // cents or percentage (0-10000)
-  tipType?: TaxTipType | null;
-}
-
-export interface PayerData {
-  groupMemberId: string;
-  splitMethod: SplitMethod;
-  splitValue?: number | null; // cents, percentage (0-10000), or null for EVEN
-}
-
-export interface OwerData {
-  groupMemberId: string;
-  splitMethod: SplitMethod;
-  splitValue?: number | null; // cents, percentage (0-10000), or null for EVEN
-}
+import type { ExpenseData, PayerInput, OwerInput } from '../schemas/expense';
 
 /**
  * Calculate the total expense amount including tax and tip
@@ -67,7 +46,7 @@ export function calculateTotalExpenseAmount(expense: ExpenseData): number {
  */
 export function calculatePayerAmounts(
   expense: ExpenseData,
-  payers: PayerData[]
+  payers: PayerInput[]
 ): Map<string, number> {
   const results = new Map<string, number>();
   const totalAmount = calculateTotalExpenseAmount(expense);
@@ -126,7 +105,7 @@ export function calculatePayerAmounts(
  */
 export function calculateOwerAmounts(
   expense: ExpenseData,
-  owers: OwerData[]
+  owers: OwerInput[]
 ): Map<string, number> {
   const results = new Map<string, number>();
 
@@ -234,8 +213,8 @@ export function calculateOwerAmounts(
 export function calculateNetBalances(
   expenses: Array<{
     expense: ExpenseData;
-    payers: PayerData[];
-    owers: OwerData[];
+    payers: PayerInput[];
+    owers: OwerInput[];
   }>,
   settlements: Array<{
     fromGroupMemberId: string;

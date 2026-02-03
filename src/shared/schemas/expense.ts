@@ -3,9 +3,14 @@
  */
 
 import { z } from 'zod';
+import { $Enums } from '@prisma/client';
 import { tuple } from '../utils/type-helpers';
 import { calculateTotalExpenseAmount } from '../utils/calculations';
 import { money } from './fields';
+
+// TODO Would be really cool to use postgres data validation features for things like this
+export const TaxTipTypeEnum = z.nativeEnum($Enums.TaxTipType)
+export const SplitMethodEnum = z.nativeEnum($Enums.SplitMethod)
 
 // Param validation schema
 export const expenseParamsSchema = z.object({
@@ -13,10 +18,6 @@ export const expenseParamsSchema = z.object({
   expenseId: z.string().uuid('Invalid expense ID'),
 });
 
-// Enums matching Prisma schema
-// TODO Would be really cool to use postgres data validation features for things like this
-export const TaxTipTypeEnum = z.enum(['FIXED', 'PERCENTAGE']);
-export const SplitMethodEnum = z.enum(['EVEN', 'FIXED', 'PERCENTAGE']);
 
 // Payer and Ower schema
 export const expenseParticipant = z.object({
@@ -113,23 +114,25 @@ function applyExpenseRefinements<T extends z.ZodType<Partial<z.infer<typeof expe
     .refine(...fixedSumsCorrectly('owers'))
 }
 
+const expenseData = z.object({
+  baseAmount: money,
+  taxAmount: money.nullable().optional(),
+  taxType: TaxTipTypeEnum.nullable().optional(),
+  tipAmount: money.nullable().optional(),
+  tipType: TaxTipTypeEnum.nullable().optional(),
+});
 
-const expenseBaseSchema = z
-  .object({
-    name: expenseName,
-    description: z.string().max(1000, 'Description must be less than 1000 characters').optional(),
-    baseAmount: money,
-    taxAmount: money.nullable().optional(),
-    taxType: TaxTipTypeEnum.nullable().optional(),
-    tipAmount: money.nullable().optional(),
-    tipType: TaxTipTypeEnum.nullable().optional(),
-    payers: expenseParticipants("payers"),
-    owers: expenseParticipants("owers")
-  })
+const expenseBaseSchema = expenseData.extend({
+  name: expenseName,
+  description: z.string().max(1000, 'Description must be less than 1000 characters').optional(),
+  payers: expenseParticipants("payers"),
+  owers: expenseParticipants("owers")
+})
 
 export const createExpenseSchema = applyExpenseRefinements(expenseBaseSchema)
 export const updateExpenseSchema = applyExpenseRefinements(expenseBaseSchema.partial())
 
+export type ExpenseData = z.infer<typeof expenseData>;
 export type ExpenseParams = z.infer<typeof expenseParamsSchema>;
 export type CreateExpenseInput = z.infer<typeof createExpenseSchema>;
 export type UpdateExpenseInput = z.infer<typeof updateExpenseSchema>;

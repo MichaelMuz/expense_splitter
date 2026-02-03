@@ -13,10 +13,8 @@ import {
   calculateTotalExpenseAmount,
   calculatePayerAmounts,
   calculateOwerAmounts,
-  type ExpenseData,
-  type PayerData,
-  type OwerData,
 } from '../../shared/utils/calculations';
+import type { ExpenseData, PayerInput, OwerInput } from '../../shared/schemas/expense'
 import { Prisma } from '@prisma/client';
 import { groupIdParamSchema } from '@/shared/schemas/group';
 
@@ -60,13 +58,13 @@ function formatExpenseWithCalculations(expense: ExpenseWithRelations) {
     tipType: expense.tipType,
   };
 
-  const payers: PayerData[] = expense.payers.map(p => ({
+  const payers: PayerInput[] = expense.payers.map(p => ({
     groupMemberId: p.groupMemberId,
     splitMethod: p.splitMethod,
     splitValue: p.splitValue,
   }));
 
-  const owers: OwerData[] = expense.owers.map(o => ({
+  const owers: OwerInput[] = expense.owers.map(o => ({
     groupMemberId: o.groupMemberId,
     splitMethod: o.splitMethod,
     splitValue: o.splitValue,
