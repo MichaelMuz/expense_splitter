@@ -5,19 +5,12 @@
 import { z } from 'zod';
 import { tuple } from '../utils/type-helpers';
 import { calculateTotalExpenseAmount } from '../utils/calculations';
-
-function uuid(message?: string) {
-  return z.string().uuid(message || 'Invalid ID')
-}
-const money = z
-  .number()
-  .int('Money amount must be in cents or basis points (integer)')
-  .positive('Money amount must be positive')
+import { money } from './fields';
 
 // Param validation schema
 export const expenseParamsSchema = z.object({
-  groupId: uuid('Invalid group ID'),
-  expenseId: uuid('Invalid expense ID'),
+  groupId: z.string().uuid('Invalid group ID'),
+  expenseId: z.string().uuid('Invalid expense ID'),
 });
 
 // Enums matching Prisma schema
@@ -27,7 +20,7 @@ export const SplitMethodEnum = z.enum(['EVEN', 'FIXED', 'PERCENTAGE']);
 
 // Payer and Ower schema
 export const expenseParticipant = z.object({
-  groupMemberId: uuid('Invalid group member ID'),
+  groupMemberId: z.string().uuid('Invalid group member ID'),
   splitMethod: SplitMethodEnum,
   splitValue: z.number().int().nullable().optional(),
 });
