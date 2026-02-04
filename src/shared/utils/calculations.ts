@@ -3,7 +3,7 @@
  * All amounts are in cents (integers) for precision.
  */
 
-import type { TaxTipType } from '@prisma/client';
+import type { SplitMethod, TaxTipType } from '@prisma/client';
 import type { ExpenseData, PayerInput, OwerInput } from '../schemas/expense';
 import { assertUnreachable } from './type-helpers';
 
@@ -28,6 +28,39 @@ export function calculateTotalExpenseAmount(expense: ExpenseData): number {
   return expense.baseAmount + calc(expense.taxAmount, expense.taxType) + calc(expense.tipAmount, expense.tipType)
 }
 
+function percentageDistribute(totalAmount: number, participants: (PayerInput | OwerInput)[], splitType: Extract<SplitMethod, 'PERCENTAGE' | 'EVEN'>) {
+  let sortedPayers;
+  let amountCalc;
+  if (splitType == 'EVEN') {
+    sortedPayers = participants
+    // even split of total always
+    const perPlayer = Math.floor(totalAmount / participants.length)
+    amountCalc = (_: (PayerInput | OwerInput)) => perPlayer;
+  } else if (splitType == 'PERCENTAGE') {
+    // Make largest payer last so they handle remainder bc it is a smaller portion of their total
+    sortedPayers = [...participants].sort((a, b) =>
+      (b.splitValue || 0) - (a.splitValue || 0)
+    );
+    // splitValue is in basis points (0-10000 = 0%-100%)
+    amountCalc = (payer: (PayerInput | OwerInput)) => Math.round((totalAmount * (payer.splitValue || 0)) / 10000);
+  } else { assertUnreachable(splitType) }
+
+  const results = new Map<string, number>();
+  let remaining = totalAmount;
+  sortedPayers.forEach((payer, index) => {
+    if (index === sortedPayers.length - 1) {
+      // Last payer gets remainder
+      results.set(payer.groupMemberId, remaining);
+    } else {
+      const amount = amountCalc(payer)
+      results.set(payer.groupMemberId, amount);
+      remaining -= amount;
+    }
+  });
+  return results
+}
+
+
 /**
  * Calculate how much each payer paid
  * @param expense - Expense data
@@ -38,49 +71,19 @@ export function calculatePayerAmounts(
   expense: ExpenseData,
   payers: PayerInput[]
 ): Map<string, number> {
-  const results = new Map<string, number>();
   const totalAmount = calculateTotalExpenseAmount(expense);
 
   // zod validation ensures all split methods are the same
   const firstMethod = payers[0]?.splitMethod;
 
   if (!firstMethod) {
-  } else if (firstMethod === 'EVEN') {
-    // Even split - divide total equally
-    const perPayer = Math.floor(totalAmount / payers.length);
-    const remainder = totalAmount - perPayer * payers.length;
-
-    payers.forEach((payer, index) => {
-      // Give remainder to first payer to handle rounding
-      const amount = index === 0 ? perPayer + remainder : perPayer;
-      results.set(payer.groupMemberId, amount);
-    });
+    return new Map()
+  } else if (firstMethod === 'EVEN' || firstMethod === 'PERCENTAGE') {
+    return percentageDistribute(totalAmount, payers, firstMethod)
   } else if (firstMethod === 'FIXED') {
     // Fixed amounts - use as-is
-    payers.forEach((payer) => {
-      results.set(payer.groupMemberId, payer.splitValue || 0);
-    });
-  } else if (firstMethod === 'PERCENTAGE') {
-    // Percentage split - calculate proportional amounts
-    let remaining = totalAmount;
-    const sortedPayers = [...payers].sort((a, b) =>
-      (b.splitValue || 0) - (a.splitValue || 0)
-    );
-
-    sortedPayers.forEach((payer, index) => {
-      if (index === sortedPayers.length - 1) {
-        // Last payer gets remainder to handle rounding
-        results.set(payer.groupMemberId, remaining);
-      } else {
-        // splitValue is in basis points (0-10000 = 0%-100%)
-        const amount = Math.round((totalAmount * (payer.splitValue || 0)) / 10000);
-        results.set(payer.groupMemberId, amount);
-        remaining -= amount;
-      }
-    });
+    return new Map(payers.map(payer => [payer.groupMemberId, payer.splitValue || 0]))
   } else { assertUnreachable(firstMethod) }
-
-  return results;
 }
 
 /**
