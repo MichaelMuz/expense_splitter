@@ -28,38 +28,49 @@ export function calculateTotalExpenseAmount(expense: ExpenseData): number {
   return expense.baseAmount + calc(expense.taxAmount, expense.taxType) + calc(expense.tipAmount, expense.tipType)
 }
 
-function percentageDistribute(totalAmount: number, participants: (PayerInput | OwerInput)[], splitType: Extract<SplitMethod, 'PERCENTAGE' | 'EVEN'>) {
-  let sortedPayers;
-  let amountCalc;
-  if (splitType == 'EVEN') {
-    sortedPayers = participants
-    // even split of total always
-    const perPlayer = Math.floor(totalAmount / participants.length)
-    amountCalc = (_: (PayerInput | OwerInput)) => perPlayer;
-  } else if (splitType == 'PERCENTAGE') {
-    // Make largest payer last so they handle remainder bc it is a smaller portion of their total
-    sortedPayers = [...participants].sort((a, b) =>
-      (b.splitValue || 0) - (a.splitValue || 0)
-    );
-    // splitValue is in basis points (0-10000 = 0%-100%)
-    amountCalc = (payer: (PayerInput | OwerInput)) => Math.round((totalAmount * (payer.splitValue || 0)) / 10000);
-  } else { assertUnreachable(splitType) }
+function distributeProportionally(totalAmount: number, weights: Map<string, number>) {
+  const totalWeight = Array.from(weights.values()).reduce((a, b) => a + b, 0);
+  const sorted = Array.from(weights.entries()).sort((a, b) => b[1] - a[1]);
 
   const results = new Map<string, number>();
   let remaining = totalAmount;
-  sortedPayers.forEach((payer, index) => {
-    if (index === sortedPayers.length - 1) {
-      // Last payer gets remainder
-      results.set(payer.groupMemberId, remaining);
+  sorted.forEach(([id, weight], index) => {
+    if (index === sorted.length - 1) {
+      results.set(id, remaining);
     } else {
-      const amount = amountCalc(payer)
-      results.set(payer.groupMemberId, amount);
+      const amount = Math.round((totalAmount * weight) / totalWeight);
+      results.set(id, amount);
       remaining -= amount;
     }
   });
-  return results
+
+  return results;
 }
 
+function percentageDistribute(totalAmount: number, participants: (PayerInput | OwerInput)[], splitType: Extract<SplitMethod, 'PERCENTAGE' | 'EVEN'>) {
+  if (splitType == 'EVEN') {
+    return distributeProportionally(totalAmount, new Map(participants.map(p => [p.groupMemberId, 1])));
+  } else if (splitType == 'PERCENTAGE') {
+    return distributeProportionally(totalAmount, new Map(participants.map(p => [p.groupMemberId, p.splitValue || 0])));
+  } else { assertUnreachable(splitType) }
+}
+
+function calculateAmounts(
+  totalAmount: number,
+  participants: (PayerInput | OwerInput)[]
+): Map<string, number> {
+  // zod validation ensures all split methods are the same
+  const firstMethod = participants[0]?.splitMethod;
+
+  if (!firstMethod) {
+    return new Map()
+  } else if (firstMethod === 'EVEN' || firstMethod === 'PERCENTAGE') {
+    return percentageDistribute(totalAmount, participants, firstMethod)
+  } else if (firstMethod === 'FIXED') {
+    // Fixed amounts - use as-is
+    return new Map(participants.map(participant => [participant.groupMemberId, participant.splitValue || 0]));
+  } else { assertUnreachable(firstMethod) }
+}
 
 /**
  * Calculate how much each payer paid
@@ -71,19 +82,8 @@ export function calculatePayerAmounts(
   expense: ExpenseData,
   payers: PayerInput[]
 ): Map<string, number> {
-  const totalAmount = calculateTotalExpenseAmount(expense);
-
-  // zod validation ensures all split methods are the same
-  const firstMethod = payers[0]?.splitMethod;
-
-  if (!firstMethod) {
-    return new Map()
-  } else if (firstMethod === 'EVEN' || firstMethod === 'PERCENTAGE') {
-    return percentageDistribute(totalAmount, payers, firstMethod)
-  } else if (firstMethod === 'FIXED') {
-    // Fixed amounts - use as-is
-    return new Map(payers.map(payer => [payer.groupMemberId, payer.splitValue || 0]))
-  } else { assertUnreachable(firstMethod) }
+  // divide the total expense (including tax + tip) among all payers as per strategy
+  return calculateAmounts(calculateTotalExpenseAmount(expense), payers);
 }
 
 /**
@@ -96,101 +96,22 @@ export function calculateOwerAmounts(
   expense: ExpenseData,
   owers: OwerInput[]
 ): Map<string, number> {
-  const results = new Map<string, number>();
-
-  if (owers.length === 0) {
-    return results;
-  }
-
   // Step 1: Calculate base amounts for each ower
-  const baseAmounts = new Map<string, number>();
-  const firstMethod = owers[0]?.splitMethod;
-  const allSameMethod = firstMethod ? owers.every((o) => o.splitMethod === firstMethod) : false;
-
-  if (allSameMethod && firstMethod === 'EVEN') {
-    // Even split of base
-    const perOwer = Math.floor(expense.baseAmount / owers.length);
-    const remainder = expense.baseAmount - perOwer * owers.length;
-
-    owers.forEach((ower, index) => {
-      // Give remainder to first ower to handle rounding
-      const amount = index === 0 ? perOwer + remainder : perOwer;
-      baseAmounts.set(ower.groupMemberId, amount);
-    });
-  } else if (allSameMethod && firstMethod === 'FIXED') {
-    // Fixed amounts
-    owers.forEach((ower) => {
-      baseAmounts.set(ower.groupMemberId, ower.splitValue || 0);
-    });
-  } else if (allSameMethod && firstMethod === 'PERCENTAGE') {
-    // Percentage split
-    let remaining = expense.baseAmount;
-    const sortedOwers = [...owers].sort((a, b) =>
-      (b.splitValue || 0) - (a.splitValue || 0)
-    );
-
-    sortedOwers.forEach((ower, index) => {
-      if (index === sortedOwers.length - 1) {
-        // Last ower gets remainder to handle rounding
-        baseAmounts.set(ower.groupMemberId, remaining);
-      } else {
-        // splitValue is in basis points (0-10000 = 0%-100%)
-        const amount = Math.round((expense.baseAmount * (ower.splitValue || 0)) / 10000);
-        baseAmounts.set(ower.groupMemberId, amount);
-        remaining -= amount;
-      }
-    });
+  const baseAmounts = calculateAmounts(expense.baseAmount, owers);
+  // Step 2: Calculate tax and tip amounts
+  const calcTaxTip = (amount?: number | null, type?: TaxTipType | null) => {
+    if (!amount || !type) {
+      return 0
+    } else if (type === 'PERCENTAGE') {
+      return Math.round((expense.baseAmount * amount) / 10000);
+    } else if (type === 'FIXED') {
+      return amount;
+    } else { assertUnreachable(type) }
   }
-
-  // Step 2: Calculate total base for proportions
-  const totalBase = Array.from(baseAmounts.values()).reduce((a, b) => a + b, 0);
-
-  if (totalBase === 0) {
-    return results;
-  }
-
-  // Step 3: Calculate tax and tip amounts
-  let taxAmount = 0;
-  if (expense.taxAmount) {
-    if (expense.taxType === 'PERCENTAGE') {
-      taxAmount = Math.round((expense.baseAmount * expense.taxAmount) / 10000);
-    } else {
-      taxAmount = expense.taxAmount;
-    }
-  }
-
-  let tipAmount = 0;
-  if (expense.tipAmount) {
-    if (expense.tipType === 'PERCENTAGE') {
-      tipAmount = Math.round((expense.baseAmount * expense.tipAmount) / 10000);
-    } else {
-      tipAmount = expense.tipAmount;
-    }
-  }
-
-  // Step 4: Distribute tax and tip proportionally based on base amounts
-  let remainingTax = taxAmount;
-  let remainingTip = tipAmount;
-  const sortedMembers = Array.from(baseAmounts.entries()).sort((a, b) => b[1] - a[1]);
-
-  sortedMembers.forEach(([groupMemberId, base], index) => {
-    const proportion = base / totalBase;
-
-    if (index === sortedMembers.length - 1) {
-      // Last person gets remaining amounts to handle rounding
-      const total = base + remainingTax + remainingTip;
-      results.set(groupMemberId, total);
-    } else {
-      const tax = Math.round(taxAmount * proportion);
-      const tip = Math.round(tipAmount * proportion);
-      const total = base + tax + tip;
-      results.set(groupMemberId, total);
-      remainingTax -= tax;
-      remainingTip -= tip;
-    }
-  });
-
-  return results;
+  const totalTaxTip = calcTaxTip(expense.taxAmount, expense.taxType) + calcTaxTip(expense.tipAmount, expense.tipType)
+  // Step 3: Distribute tax and tip proportionally based on base amounts
+  const taxTipAmounts = distributeProportionally(totalTaxTip, baseAmounts)
+  return new Map(owers.map(o => [o.groupMemberId, (baseAmounts.get(o.groupMemberId) || 0) + (taxTipAmounts.get(o.groupMemberId) || 0)]))
 }
 
 /**
