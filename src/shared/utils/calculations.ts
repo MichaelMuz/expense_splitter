@@ -47,14 +47,6 @@ function distributeProportionally(totalAmount: number, weights: Map<string, numb
   return results;
 }
 
-function percentageDistribute(totalAmount: number, participants: (PayerInput | OwerInput)[], splitType: Extract<SplitMethod, 'PERCENTAGE' | 'EVEN'>) {
-  if (splitType == 'EVEN') {
-    return distributeProportionally(totalAmount, new Map(participants.map(p => [p.groupMemberId, 1])));
-  } else if (splitType == 'PERCENTAGE') {
-    return distributeProportionally(totalAmount, new Map(participants.map(p => [p.groupMemberId, p.splitValue || 0])));
-  } else { assertUnreachable(splitType) }
-}
-
 function calculateAmounts(
   totalAmount: number,
   participants: (PayerInput | OwerInput)[]
@@ -64,10 +56,11 @@ function calculateAmounts(
 
   if (!firstMethod) {
     return new Map()
-  } else if (firstMethod === 'EVEN' || firstMethod === 'PERCENTAGE') {
-    return percentageDistribute(totalAmount, participants, firstMethod)
+  } else if (firstMethod === 'EVEN') {
+    return distributeProportionally(totalAmount, new Map(participants.map(p => [p.groupMemberId, 1])));
+  } else if (firstMethod === 'PERCENTAGE') {
+    return distributeProportionally(totalAmount, new Map(participants.map(p => [p.groupMemberId, p.splitValue || 0])));
   } else if (firstMethod === 'FIXED') {
-    // Fixed amounts - use as-is
     return new Map(participants.map(participant => [participant.groupMemberId, participant.splitValue || 0]));
   } else { assertUnreachable(firstMethod) }
 }
@@ -119,6 +112,7 @@ export function calculateOwerAmounts(
  * @param expenses - Array of expenses with payer and ower data
  * @param settlements - Array of settlements
  * @returns Map of "fromMemberId->toMemberId" to net amount owed in cents
+ * TODO: I should make a an explicit money type that is in cents
  */
 export function calculateNetBalances(
   expenses: Array<{
@@ -129,7 +123,7 @@ export function calculateNetBalances(
   settlements: Array<{
     fromGroupMemberId: string;
     toGroupMemberId: string;
-    amount: number; // cents
+    amount: number;
   }>
 ): Map<string, number> {
   // Track debts: Map of "debtorId->creditorId" to amount
