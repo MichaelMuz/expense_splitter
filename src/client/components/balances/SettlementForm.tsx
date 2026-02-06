@@ -3,7 +3,11 @@
  */
 
 import { useState } from 'react';
-import { toCents, toDollars, formatCurrency } from '../../../shared/utils/currency';
+import {
+  toCents,
+  toDollars,
+  formatCurrency,
+} from '../../../shared/utils/currency';
 import type { CreateSettlementInput } from '../../../shared/schemas/settlement';
 
 interface Member {
@@ -53,21 +57,28 @@ export function SettlementForm({
     onSubmit(data);
   };
 
-  const isValid = fromMemberId && toMemberId && amount && fromMemberId !== toMemberId;
+  const isValid =
+    fromMemberId && toMemberId && amount && fromMemberId !== toMemberId;
   const amountCents = toCents(parseFloat(amount) || 0);
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Record Payment</h3>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          Record Payment
+        </h3>
         <p className="text-sm text-gray-600">
-          Record a payment that was made between group members to update balances.
+          Record a payment that was made between group members to update
+          balances.
         </p>
       </div>
 
       {/* From Member */}
       <div>
-        <label htmlFor="fromMember" className="block text-sm font-medium text-gray-700 mb-1">
+        <label
+          htmlFor="fromMember"
+          className="block text-sm font-medium text-gray-700 mb-1"
+        >
           From (Payer) *
         </label>
         <select
@@ -89,7 +100,10 @@ export function SettlementForm({
 
       {/* To Member */}
       <div>
-        <label htmlFor="toMember" className="block text-sm font-medium text-gray-700 mb-1">
+        <label
+          htmlFor="toMember"
+          className="block text-sm font-medium text-gray-700 mb-1"
+        >
           To (Receiver) *
         </label>
         <select
@@ -115,7 +129,10 @@ export function SettlementForm({
 
       {/* Amount */}
       <div>
-        <label htmlFor="amount" className="block text-sm font-medium text-gray-700 mb-1">
+        <label
+          htmlFor="amount"
+          className="block text-sm font-medium text-gray-700 mb-1"
+        >
           Amount * ($)
         </label>
         <input
@@ -134,7 +151,9 @@ export function SettlementForm({
       {/* Same person error */}
       {fromMemberId && toMemberId && fromMemberId === toMemberId && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-          <p className="text-sm text-red-800">Cannot record payment to yourself</p>
+          <p className="text-sm text-red-800">
+            Cannot record payment to yourself
+          </p>
         </div>
       )}
 

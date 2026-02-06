@@ -3,7 +3,10 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import type { CreateExpenseInput, UpdateExpenseInput } from '../../shared/schemas/expense';
+import type {
+  CreateExpenseInput,
+  UpdateExpenseInput,
+} from '../../shared/schemas/expense';
 
 // API response types
 export interface ExpensePayer {
@@ -72,13 +75,19 @@ async function fetchExpenses(groupId: string): Promise<Expense[]> {
   return data.expenses;
 }
 
-async function fetchExpense(groupId: string, expenseId: string): Promise<Expense> {
+async function fetchExpense(
+  groupId: string,
+  expenseId: string
+): Promise<Expense> {
   const token = getAuthToken();
-  const response = await fetch(`${API_BASE_URL}/groups/${groupId}/expenses/${expenseId}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
+  const response = await fetch(
+    `${API_BASE_URL}/groups/${groupId}/expenses/${expenseId}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
 
   if (!response.ok) {
     throw new Error('Failed to fetch expense');
@@ -88,7 +97,10 @@ async function fetchExpense(groupId: string, expenseId: string): Promise<Expense
   return data.expense;
 }
 
-async function createExpense(groupId: string, input: CreateExpenseInput): Promise<Expense> {
+async function createExpense(
+  groupId: string,
+  input: CreateExpenseInput
+): Promise<Expense> {
   const token = getAuthToken();
   const response = await fetch(`${API_BASE_URL}/groups/${groupId}/expenses`, {
     method: 'POST',
@@ -114,14 +126,17 @@ async function updateExpense(
   input: UpdateExpenseInput
 ): Promise<Expense> {
   const token = getAuthToken();
-  const response = await fetch(`${API_BASE_URL}/groups/${groupId}/expenses/${expenseId}`, {
-    method: 'PATCH',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify(input),
-  });
+  const response = await fetch(
+    `${API_BASE_URL}/groups/${groupId}/expenses/${expenseId}`,
+    {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(input),
+    }
+  );
 
   if (!response.ok) {
     const error = await response.json();
@@ -132,14 +147,20 @@ async function updateExpense(
   return data.expense;
 }
 
-async function deleteExpense(groupId: string, expenseId: string): Promise<void> {
+async function deleteExpense(
+  groupId: string,
+  expenseId: string
+): Promise<void> {
   const token = getAuthToken();
-  const response = await fetch(`${API_BASE_URL}/groups/${groupId}/expenses/${expenseId}`, {
-    method: 'DELETE',
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
+  const response = await fetch(
+    `${API_BASE_URL}/groups/${groupId}/expenses/${expenseId}`,
+    {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
 
   if (!response.ok) {
     const error = await response.json();
@@ -164,11 +185,18 @@ export function useExpenses(groupId: string) {
 /**
  * Fetch a single expense
  */
-export function useExpense(groupId: string, expenseId: string, options?: { enabled?: boolean }) {
+export function useExpense(
+  groupId: string,
+  expenseId: string,
+  options?: { enabled?: boolean }
+) {
   return useQuery({
     queryKey: ['expenses', groupId, expenseId],
     queryFn: () => fetchExpense(groupId, expenseId),
-    enabled: options?.enabled !== undefined ? options.enabled : (!!groupId && !!expenseId),
+    enabled:
+      options?.enabled !== undefined
+        ? options.enabled
+        : !!groupId && !!expenseId,
     refetchOnMount: true,
   });
 }
@@ -196,11 +224,14 @@ export function useUpdateExpense(groupId: string, expenseId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (input: UpdateExpenseInput) => updateExpense(groupId, expenseId, input),
+    mutationFn: (input: UpdateExpenseInput) =>
+      updateExpense(groupId, expenseId, input),
     onSuccess: () => {
       // Invalidate and refetch expenses and balances
       queryClient.invalidateQueries({ queryKey: ['expenses', groupId] });
-      queryClient.invalidateQueries({ queryKey: ['expenses', groupId, expenseId] });
+      queryClient.invalidateQueries({
+        queryKey: ['expenses', groupId, expenseId],
+      });
       queryClient.invalidateQueries({ queryKey: ['balances', groupId] });
     },
   });

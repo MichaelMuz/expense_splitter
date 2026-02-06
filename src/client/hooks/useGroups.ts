@@ -101,7 +101,9 @@ export function useJoinGroup() {
 
   return useMutation({
     mutationFn: async (inviteCode: string) => {
-      const response = await api.post<JoinGroupResponse>(`/groups/join/${inviteCode}`);
+      const response = await api.post<JoinGroupResponse>(
+        `/groups/join/${inviteCode}`
+      );
       return response.data;
     },
     onSuccess: () => {

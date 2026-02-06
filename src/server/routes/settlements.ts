@@ -7,7 +7,11 @@ import { Router } from 'express';
 import { prisma } from '../lib/prisma';
 import { authenticateToken } from '../middleware/auth';
 import { validateBody, validateParams } from '../middleware/validate';
-import { createSettlementSchema, settlementParamsSchema, type CreateSettlementInput } from '../../shared/schemas/settlement';
+import {
+  createSettlementSchema,
+  settlementParamsSchema,
+  type CreateSettlementInput,
+} from '../../shared/schemas/settlement';
 import { checkGroupMembership } from '../middleware/group-membership';
 import { groupIdParamSchema } from '@/shared/schemas/group';
 
@@ -27,7 +31,7 @@ router.post(
     try {
       const groupId = req.params.groupId!; // Validated by middleware
       const groupMembership = req.groupMembership!;
-      const createSettlement = req.body as CreateSettlementInput
+      const createSettlement = req.body as CreateSettlementInput;
       const { fromGroupMemberId, toGroupMemberId, amount } = createSettlement;
 
       // Verify all group member IDs belong to this group
@@ -163,9 +167,18 @@ router.delete(
         res.status(404).json({ error: 'Settlement not found' });
         return;
       }
-      const canDelete = (groupMembership.role === 'owner' || [settlement.fromGroupMemberId, settlement.toGroupMemberId, settlement.recordedBy].includes(groupMembership.id));
+      const canDelete =
+        groupMembership.role === 'owner' ||
+        [
+          settlement.fromGroupMemberId,
+          settlement.toGroupMemberId,
+          settlement.recordedBy,
+        ].includes(groupMembership.id);
       if (!canDelete) {
-        res.status(403).json({ error: 'You can only delete a settlement if you are the recorder, sender, receiver, or owner of the group' });
+        res.status(403).json({
+          error:
+            'You can only delete a settlement if you are the recorder, sender, receiver, or owner of the group',
+        });
         return;
       }
 
@@ -174,7 +187,7 @@ router.delete(
         where: { id: settlementId },
       });
 
-      res.status(204).send()
+      res.status(204).send();
     } catch (error) {
       next(error);
     }

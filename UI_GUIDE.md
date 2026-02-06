@@ -5,6 +5,7 @@ Quick reference for the Expense Splitter design system.
 ## Design System
 
 **Colors** (defined in `tailwind.config.js`):
+
 - `primary-*` - Sky blue brand color
 - `success-*` - Green (owed TO you)
 - `danger-*` - Red (you OWE)
@@ -12,6 +13,7 @@ Quick reference for the Expense Splitter design system.
 - `neutral-*` - Warm gray (text, borders, backgrounds)
 
 **Typography**:
+
 - Inter font for body text (default)
 - **Always use `font-mono` for currency/numbers** (JetBrains Mono)
 
@@ -37,11 +39,13 @@ Browse: https://lucide.dev/icons/
 ## Animations
 
 Import from `src/client/utils/animations.ts`:
+
 - `fadeInUp`, `slideUp`, `scaleIn` - entrance animations
 - `hoverLift`, `hoverGlow`, `tapScale` - interactions
 - `staggerChildren`, `listItem` - list animations
 
 Use with Framer Motion:
+
 ```tsx
 <motion.div variants={fadeInUp} initial="initial" animate="animate">
 ```
@@ -49,6 +53,7 @@ Use with Framer Motion:
 ## Utilities
 
 `src/client/utils/colors.ts`:
+
 - `stringToColor(name)` - consistent color from string
 - `getInitials(name)` - extract initials for avatars
 - `stringToGradient(name)` - generate gradient

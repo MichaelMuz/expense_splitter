@@ -20,12 +20,15 @@ export function TooltipProvider({ children }: { children: ReactNode }) {
   );
 }
 
-export function Tooltip({ content, children, side = 'top', delayDuration = 300 }: TooltipProps) {
+export function Tooltip({
+  content,
+  children,
+  side = 'top',
+  delayDuration = 300,
+}: TooltipProps) {
   return (
     <TooltipPrimitive.Root delayDuration={delayDuration}>
-      <TooltipPrimitive.Trigger asChild>
-        {children}
-      </TooltipPrimitive.Trigger>
+      <TooltipPrimitive.Trigger asChild>{children}</TooltipPrimitive.Trigger>
       <TooltipPrimitive.Portal>
         <TooltipPrimitive.Content
           side={side}

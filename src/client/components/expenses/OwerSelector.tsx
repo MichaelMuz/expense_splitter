@@ -73,16 +73,24 @@ export function OwerSelector({
     const newErrors: string[] = [];
 
     if (splitMethod === 'FIXED') {
-      const total = currentOwers.reduce((sum, o) => sum + (o.splitValue || 0), 0);
+      const total = currentOwers.reduce(
+        (sum, o) => sum + (o.splitValue || 0),
+        0
+      );
       if (total !== baseAmount) {
         newErrors.push(
           `Total must equal ${toDollars(baseAmount).toFixed(2)} (currently ${toDollars(total).toFixed(2)})`
         );
       }
     } else if (splitMethod === 'PERCENTAGE') {
-      const total = currentOwers.reduce((sum, o) => sum + (o.splitValue || 0), 0);
+      const total = currentOwers.reduce(
+        (sum, o) => sum + (o.splitValue || 0),
+        0
+      );
       if (total !== 10000) {
-        newErrors.push(`Percentages must total 100% (currently ${total / 100}%)`);
+        newErrors.push(
+          `Percentages must total 100% (currently ${total / 100}%)`
+        );
       }
     }
 
@@ -130,21 +138,29 @@ export function OwerSelector({
                   onChange={() => handleToggleMember(member.id)}
                   className="h-4 w-4 text-blue-600 rounded border-gray-300"
                 />
-                <span className="ml-2 text-sm text-gray-700">{member.name}</span>
+                <span className="ml-2 text-sm text-gray-700">
+                  {member.name}
+                </span>
               </label>
 
               {isSelected && splitMethod !== 'EVEN' && ower && (
                 <div className="flex items-center gap-1">
-                  {splitMethod === 'FIXED' && <span className="text-sm text-gray-500">$</span>}
+                  {splitMethod === 'FIXED' && (
+                    <span className="text-sm text-gray-500">$</span>
+                  )}
                   <input
                     type="number"
                     step={splitMethod === 'FIXED' ? '0.01' : '0.01'}
                     min="0"
                     value={getDisplayValue(ower)}
-                    onChange={(e) => handleUpdateValue(member.id, e.target.value)}
+                    onChange={(e) =>
+                      handleUpdateValue(member.id, e.target.value)
+                    }
                     className="w-24 px-2 py-1 text-sm border border-gray-300 rounded"
                   />
-                  {splitMethod === 'PERCENTAGE' && <span className="text-sm text-gray-500">%</span>}
+                  {splitMethod === 'PERCENTAGE' && (
+                    <span className="text-sm text-gray-500">%</span>
+                  )}
                 </div>
               )}
             </div>
@@ -153,7 +169,9 @@ export function OwerSelector({
       </div>
 
       {owers.length === 0 && (
-        <p className="mt-2 text-sm text-red-600">At least one person is required</p>
+        <p className="mt-2 text-sm text-red-600">
+          At least one person is required
+        </p>
       )}
     </div>
   );

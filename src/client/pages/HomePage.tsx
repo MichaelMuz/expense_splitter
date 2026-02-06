@@ -28,7 +28,9 @@ export default function HomePage() {
             <Button className="w-full">Get Started</Button>
           </Link>
           <Link to="/login" className="block">
-            <Button variant="secondary" className="w-full">Login</Button>
+            <Button variant="secondary" className="w-full">
+              Login
+            </Button>
           </Link>
         </div>
 

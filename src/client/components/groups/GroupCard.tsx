@@ -38,20 +38,26 @@ export function GroupCard({ group, onClick }: GroupCardProps) {
       <div className="flex justify-between items-start mb-3">
         <div>
           <h3 className="text-lg font-semibold text-gray-900">{group.name}</h3>
-          <p className="text-sm text-gray-500">Created {formatDate(group.createdAt)}</p>
+          <p className="text-sm text-gray-500">
+            Created {formatDate(group.createdAt)}
+          </p>
         </div>
       </div>
 
       <div className="space-y-2">
         <div className="flex items-center justify-between text-sm">
           <span className="text-gray-600">Members:</span>
-          <span className="font-medium text-gray-900">{group.members.length}</span>
+          <span className="font-medium text-gray-900">
+            {group.members.length}
+          </span>
         </div>
 
         {group._count && (
           <div className="flex items-center justify-between text-sm">
             <span className="text-gray-600">Expenses:</span>
-            <span className="font-medium text-gray-900">{group._count.expenses}</span>
+            <span className="font-medium text-gray-900">
+              {group._count.expenses}
+            </span>
           </div>
         )}
       </div>

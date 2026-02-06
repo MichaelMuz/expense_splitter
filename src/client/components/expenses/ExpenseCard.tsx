@@ -33,7 +33,11 @@ export function ExpenseCard({ expense, onEdit, onDelete }: ExpenseCardProps) {
   return (
     <motion.div
       className="bg-white shadow-sm rounded-xl p-5 border border-neutral-200 overflow-hidden"
-      whileHover={{ ...hoverLift, boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)' }}
+      whileHover={{
+        ...hoverLift,
+        boxShadow:
+          '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)',
+      }}
       transition={{ duration: 0.2 }}
     >
       {/* Header */}
@@ -43,9 +47,12 @@ export function ExpenseCard({ expense, onEdit, onDelete }: ExpenseCardProps) {
             <Receipt size={24} />
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className="text-lg font-bold text-neutral-800 mb-1">{expense.name}</h3>
+            <h3 className="text-lg font-bold text-neutral-800 mb-1">
+              {expense.name}
+            </h3>
             <p className="text-sm text-neutral-500">
-              {formatDate(expense.createdAt)} • Paid by {expense.payers.map(p => p.groupMember.name).join(', ')}
+              {formatDate(expense.createdAt)} • Paid by{' '}
+              {expense.payers.map((p) => p.groupMember.name).join(', ')}
             </p>
           </div>
         </div>
@@ -70,7 +77,11 @@ export function ExpenseCard({ expense, onEdit, onDelete }: ExpenseCardProps) {
             onClick={() => setShowBreakdown(!showBreakdown)}
             className="flex items-center gap-2 text-sm font-semibold text-neutral-700 hover:text-neutral-900 transition-colors mb-2"
           >
-            {showBreakdown ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+            {showBreakdown ? (
+              <ChevronUp size={16} />
+            ) : (
+              <ChevronDown size={16} />
+            )}
             BREAKDOWN
           </button>
           {showBreakdown && (
@@ -89,11 +100,19 @@ export function ExpenseCard({ expense, onEdit, onDelete }: ExpenseCardProps) {
               {expense.taxAmount && (
                 <div className="flex justify-between text-sm">
                   <span className="text-neutral-600">
-                    Tax ({expense.taxType === 'PERCENTAGE' ? `${expense.taxAmount / 100}%` : 'Fixed'}):
+                    Tax (
+                    {expense.taxType === 'PERCENTAGE'
+                      ? `${expense.taxAmount / 100}%`
+                      : 'Fixed'}
+                    ):
                   </span>
                   <span className="font-mono font-medium text-neutral-800">
                     {expense.taxType === 'PERCENTAGE'
-                      ? formatCurrency(Math.round((expense.baseAmount * expense.taxAmount) / 10000))
+                      ? formatCurrency(
+                          Math.round(
+                            (expense.baseAmount * expense.taxAmount) / 10000
+                          )
+                        )
                       : formatCurrency(expense.taxAmount)}
                   </span>
                 </div>
@@ -101,11 +120,19 @@ export function ExpenseCard({ expense, onEdit, onDelete }: ExpenseCardProps) {
               {expense.tipAmount && (
                 <div className="flex justify-between text-sm">
                   <span className="text-neutral-600">
-                    Tip ({expense.tipType === 'PERCENTAGE' ? `${expense.tipAmount / 100}%` : 'Fixed'}):
+                    Tip (
+                    {expense.tipType === 'PERCENTAGE'
+                      ? `${expense.tipAmount / 100}%`
+                      : 'Fixed'}
+                    ):
                   </span>
                   <span className="font-mono font-medium text-neutral-800">
                     {expense.tipType === 'PERCENTAGE'
-                      ? formatCurrency(Math.round((expense.baseAmount * expense.tipAmount) / 10000))
+                      ? formatCurrency(
+                          Math.round(
+                            (expense.baseAmount * expense.tipAmount) / 10000
+                          )
+                        )
                       : formatCurrency(expense.tipAmount)}
                   </span>
                 </div>
@@ -122,10 +149,15 @@ export function ExpenseCard({ expense, onEdit, onDelete }: ExpenseCardProps) {
         </h4>
         <div className="space-y-2">
           {expense.owers.map((ower) => (
-            <div key={ower.groupMemberId} className="flex items-center justify-between">
+            <div
+              key={ower.groupMemberId}
+              className="flex items-center justify-between"
+            >
               <div className="flex items-center gap-2">
                 <Avatar name={ower.groupMember.name} size="sm" />
-                <span className="text-sm text-neutral-700">{ower.groupMember.name}</span>
+                <span className="text-sm text-neutral-700">
+                  {ower.groupMember.name}
+                </span>
               </div>
               <span className="font-mono font-semibold text-sm text-neutral-800">
                 {formatCurrency(ower.calculatedAmount)}

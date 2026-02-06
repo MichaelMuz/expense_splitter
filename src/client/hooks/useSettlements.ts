@@ -34,11 +34,14 @@ function getAuthToken(): string | null {
 // API call functions
 async function fetchSettlements(groupId: string): Promise<Settlement[]> {
   const token = getAuthToken();
-  const response = await fetch(`${API_BASE_URL}/groups/${groupId}/settlements`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
+  const response = await fetch(
+    `${API_BASE_URL}/groups/${groupId}/settlements`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
 
   if (!response.ok) {
     throw new Error('Failed to fetch settlements');
@@ -53,14 +56,17 @@ async function createSettlement(
   input: CreateSettlementInput
 ): Promise<Settlement> {
   const token = getAuthToken();
-  const response = await fetch(`${API_BASE_URL}/groups/${groupId}/settlements`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify(input),
-  });
+  const response = await fetch(
+    `${API_BASE_URL}/groups/${groupId}/settlements`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(input),
+    }
+  );
 
   if (!response.ok) {
     const error = await response.json();
@@ -71,14 +77,20 @@ async function createSettlement(
   return data.settlement;
 }
 
-async function deleteSettlement(groupId: string, settlementId: string): Promise<void> {
+async function deleteSettlement(
+  groupId: string,
+  settlementId: string
+): Promise<void> {
   const token = getAuthToken();
-  const response = await fetch(`${API_BASE_URL}/groups/${groupId}/settlements/${settlementId}`, {
-    method: 'DELETE',
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
+  const response = await fetch(
+    `${API_BASE_URL}/groups/${groupId}/settlements/${settlementId}`,
+    {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
 
   if (!response.ok) {
     const error = await response.json();
@@ -107,7 +119,8 @@ export function useCreateSettlement(groupId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (input: CreateSettlementInput) => createSettlement(groupId, input),
+    mutationFn: (input: CreateSettlementInput) =>
+      createSettlement(groupId, input),
     onSuccess: () => {
       // Invalidate and refetch settlements and balances
       queryClient.invalidateQueries({ queryKey: ['settlements', groupId] });
@@ -123,7 +136,8 @@ export function useDeleteSettlement(groupId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (settlementId: string) => deleteSettlement(groupId, settlementId),
+    mutationFn: (settlementId: string) =>
+      deleteSettlement(groupId, settlementId),
     onSuccess: () => {
       // Invalidate and refetch settlements and balances
       queryClient.invalidateQueries({ queryKey: ['settlements', groupId] });

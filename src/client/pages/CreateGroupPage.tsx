@@ -30,7 +30,10 @@ export default function CreateGroupPage() {
       const group = await createGroup.mutateAsync({ name: name.trim() });
       navigate(`/groups/${group.id}`);
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to create group. Please try again.');
+      setError(
+        err.response?.data?.message ||
+          'Failed to create group. Please try again.'
+      );
     }
   };
 

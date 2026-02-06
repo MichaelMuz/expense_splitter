@@ -10,7 +10,11 @@ interface SplitMethodPickerProps {
   label?: string;
 }
 
-export function SplitMethodPicker({ value, onChange, label = 'Split Method' }: SplitMethodPickerProps) {
+export function SplitMethodPicker({
+  value,
+  onChange,
+  label = 'Split Method',
+}: SplitMethodPickerProps) {
   return (
     <div>
       <label className="block text-sm font-medium text-gray-700 mb-2">

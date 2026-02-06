@@ -20,7 +20,9 @@ export default function SettlementPage() {
   const fromMemberId = searchParams.get('from');
   const toMemberId = searchParams.get('to');
   const amountCents = searchParams.get('amount');
-  const suggestedAmount = amountCents ? toDollars(parseInt(amountCents)) : undefined;
+  const suggestedAmount = amountCents
+    ? toDollars(parseInt(amountCents))
+    : undefined;
 
   const { data: group, isLoading: groupLoading } = useGroup(groupId!);
   const createSettlement = useCreateSettlement(groupId!);
@@ -76,7 +78,9 @@ export default function SettlementPage() {
           >
             ← Back to {group.name}
           </button>
-          <h1 className="text-3xl font-bold text-gray-900">Record Settlement</h1>
+          <h1 className="text-3xl font-bold text-gray-900">
+            Record Settlement
+          </h1>
           <p className="mt-1 text-sm text-gray-500">
             Record a payment between group members
           </p>
@@ -100,8 +104,8 @@ export default function SettlementPage() {
             </div>
             <div className="ml-3 flex-1">
               <p className="text-sm text-blue-700">
-                Recording a settlement reduces the debt between two members. Either party can
-                record the payment - no confirmation needed.
+                Recording a settlement reduces the debt between two members.
+                Either party can record the payment - no confirmation needed.
               </p>
             </div>
           </div>

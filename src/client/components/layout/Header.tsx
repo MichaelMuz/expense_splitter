@@ -22,7 +22,10 @@ export function Header() {
           <nav className="flex items-center gap-4">
             {isAuthenticated ? (
               <>
-                <Link to="/groups" className="text-gray-700 hover:text-gray-900">
+                <Link
+                  to="/groups"
+                  className="text-gray-700 hover:text-gray-900"
+                >
                   Groups
                 </Link>
                 <span className="text-gray-600 text-sm">{user?.email}</span>

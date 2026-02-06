@@ -25,11 +25,18 @@ export function calculateTotalExpenseAmount(expense: ExpenseData): number {
       }
     }
     return 0;
-  }
-  return expense.baseAmount + calc(expense.taxAmount, expense.taxType) + calc(expense.tipAmount, expense.tipType)
+  };
+  return (
+    expense.baseAmount +
+    calc(expense.taxAmount, expense.taxType) +
+    calc(expense.tipAmount, expense.tipType)
+  );
 }
 
-function distributeProportionally(totalAmount: number, weights: Map<string, number>) {
+function distributeProportionally(
+  totalAmount: number,
+  weights: Map<string, number>
+) {
   const totalWeight = Array.from(weights.values()).reduce((a, b) => a + b, 0);
   const sorted = Array.from(weights.entries()).sort((a, b) => b[1] - a[1]);
 
@@ -56,14 +63,27 @@ function calculateAmounts(
   const firstMethod = participants[0]?.splitMethod;
 
   if (!firstMethod) {
-    return new Map()
+    return new Map();
   } else if (firstMethod === 'EVEN') {
-    return distributeProportionally(totalAmount, new Map(participants.map(p => [p.groupMemberId, 1])));
+    return distributeProportionally(
+      totalAmount,
+      new Map(participants.map((p) => [p.groupMemberId, 1]))
+    );
   } else if (firstMethod === 'PERCENTAGE') {
-    return distributeProportionally(totalAmount, new Map(participants.map(p => [p.groupMemberId, p.splitValue || 0])));
+    return distributeProportionally(
+      totalAmount,
+      new Map(participants.map((p) => [p.groupMemberId, p.splitValue || 0]))
+    );
   } else if (firstMethod === 'FIXED') {
-    return new Map(participants.map(participant => [participant.groupMemberId, participant.splitValue || 0]));
-  } else { assertUnreachable(firstMethod) }
+    return new Map(
+      participants.map((participant) => [
+        participant.groupMemberId,
+        participant.splitValue || 0,
+      ])
+    );
+  } else {
+    assertUnreachable(firstMethod);
+  }
 }
 
 /**
@@ -95,17 +115,27 @@ export function calculateOwerAmounts(
   // Step 2: Calculate tax and tip amounts
   const calcTaxTip = (amount?: number | null, type?: TaxTipType | null) => {
     if (!amount || !type) {
-      return 0
+      return 0;
     } else if (type === 'PERCENTAGE') {
       return Math.round((expense.baseAmount * amount) / 10000);
     } else if (type === 'FIXED') {
       return amount;
-    } else { assertUnreachable(type) }
-  }
-  const totalTaxTip = calcTaxTip(expense.taxAmount, expense.taxType) + calcTaxTip(expense.tipAmount, expense.tipType)
+    } else {
+      assertUnreachable(type);
+    }
+  };
+  const totalTaxTip =
+    calcTaxTip(expense.taxAmount, expense.taxType) +
+    calcTaxTip(expense.tipAmount, expense.tipType);
   // Step 3: Distribute tax and tip proportionally based on base amounts
-  const taxTipAmounts = distributeProportionally(totalTaxTip, baseAmounts)
-  return new Map(owers.map(o => [o.groupMemberId, (baseAmounts.get(o.groupMemberId) || 0) + (taxTipAmounts.get(o.groupMemberId) || 0)]))
+  const taxTipAmounts = distributeProportionally(totalTaxTip, baseAmounts);
+  return new Map(
+    owers.map((o) => [
+      o.groupMemberId,
+      (baseAmounts.get(o.groupMemberId) || 0) +
+        (taxTipAmounts.get(o.groupMemberId) || 0),
+    ])
+  );
 }
 
 /**
@@ -129,7 +159,11 @@ export function calculateNetBalances(
 ): Map<string, Map<string, number>> {
   const owedToOwerToAmount = new Map<string, Map<string, number>>();
 
-  const addToMapUnlessZero = (payerId: string, owerId: string, toAdd: number) => {
+  const addToMapUnlessZero = (
+    payerId: string,
+    owerId: string,
+    toAdd: number
+  ) => {
     let owerToAmount = owedToOwerToAmount.get(payerId);
     if (!owerToAmount) {
       owerToAmount = new Map();
@@ -137,11 +171,11 @@ export function calculateNetBalances(
     }
     const amount = (owerToAmount.get(owerId) || 0) + toAdd;
     if (amount === 0) {
-      owerToAmount.delete(owerId)
+      owerToAmount.delete(owerId);
     } else {
       owerToAmount.set(owerId, amount);
     }
-  }
+  };
 
   // Process each expense
   expenses.forEach(({ expense, payers, owers }) => {
@@ -149,21 +183,25 @@ export function calculateNetBalances(
     const pToOwes = calculateOwerAmounts(expense, owers);
 
     // Simplify members that both paid and partook
-    new Set(pToPaid.keys()).intersection(new Set(pToOwes)).forEach(mId => {
+    new Set(pToPaid.keys()).intersection(new Set(pToOwes)).forEach((mId) => {
       const paid = pToPaid.get(mId) || 0;
       const owes = pToOwes.get(mId) || 0;
       const maxExch = Math.min(paid, owes);
-      pToPaid.set(mId, paid - maxExch)
-      pToOwes.set(mId, owes - maxExch)
+      pToPaid.set(mId, paid - maxExch);
+      pToOwes.set(mId, owes - maxExch);
     });
 
     // If we sort the list of payers by amount paid desc and owers by amount owed desc then we can two pointer
-    const [paidIter, owesIter] = [pToPaid, pToOwes].map(p => Array.from(p.entries()).sort((a, b) => b[1] - a[1]).values());
+    const [paidIter, owesIter] = [pToPaid, pToOwes].map((p) =>
+      Array.from(p.entries())
+        .sort((a, b) => b[1] - a[1])
+        .values()
+    );
 
-    const moveIter = (iter?: ArrayIterator<[string, number]>) => iter?.next().value ?? [undefined, undefined];
+    const moveIter = (iter?: ArrayIterator<[string, number]>) =>
+      iter?.next().value ?? [undefined, undefined];
     let [payerId, amountPaid] = moveIter(paidIter);
     let [owerId, amountOwed] = moveIter(owesIter);
-
 
     while (payerId && owerId && amountPaid && amountOwed) {
       const maxExch = Math.min(amountPaid, amountOwed);
@@ -178,12 +216,19 @@ export function calculateNetBalances(
         [owerId, amountOwed] = moveIter(owesIter);
       }
     }
-    assert(!payerId && !owerId && !amountPaid && !amountOwed, "Expected all to balance out")
+    assert(
+      !payerId && !owerId && !amountPaid && !amountOwed,
+      'Expected all to balance out'
+    );
   });
 
   // Apply settlements (reduce debts)
-  settlements.forEach(settlement => {
-    addToMapUnlessZero(settlement.toGroupMemberId, settlement.fromGroupMemberId, -settlement.amount);
+  settlements.forEach((settlement) => {
+    addToMapUnlessZero(
+      settlement.toGroupMemberId,
+      settlement.fromGroupMemberId,
+      -settlement.amount
+    );
   });
 
   return owedToOwerToAmount;

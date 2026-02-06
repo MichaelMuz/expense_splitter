@@ -5,6 +5,7 @@
 **Never store calculated values.** The database should only contain the raw input data that users enter. All amounts owed, balances, and totals are computed on-the-fly from this atomic data.
 
 ### Why?
+
 1. **Expense Editability**: When editing, users see exactly what they originally entered
 2. **Data Integrity**: No risk of stale or incorrect cached calculations
 3. **Single Source of Truth**: Calculations can be improved without data migration
@@ -33,10 +34,12 @@ model User {
 ```
 
 **Key Fields**:
+
 - `email` / `password`: Login credentials (always required)
 - One user can appear as different names in different groups via GroupMember
 
 **Design Benefits**:
+
 - Clean separation: User = login, GroupMember = persona
 - No nullable credentials or boolean flags with weak invariants
 - Multiple personas: "Mike" in one group, "Michael" in another
@@ -70,6 +73,7 @@ model GroupMember {
 ```
 
 **Key Fields**:
+
 - `userId`: Nullable - presence determines if virtual or real
   - `null` = virtual person (offline participant)
   - `not-null` = real user (has account)
@@ -77,11 +81,13 @@ model GroupMember {
 - `@@unique([groupId, userId])`: Prevents duplicate joins
 
 **Virtual Person Flow**:
+
 1. Create GroupMember with `userId = null`, `name = "John"`
 2. When John joins via invite link, just set `userId = <their-account-id>`
 3. No data migration needed!
 
 **Design Benefits**:
+
 - Enforced invariants: virtual people CAN'T have passwords (database-level)
 - Simple claiming: just update userId field
 - Multiple personas: same User appears with different names in different groups
@@ -109,6 +115,7 @@ model Group {
 ```
 
 **Key Fields**:
+
 - `inviteCode`: Unique shareable link for inviting people
 
 ---
@@ -152,11 +159,13 @@ enum TaxTipType {
 ```
 
 **Key Fields**:
+
 - `baseAmount`: Pre-tax/tip subtotal (always required)
 - `taxAmount` / `taxType`: Optional tax as $ or %
 - `tipAmount` / `tipType`: Optional tip as $ or %
 
 **NOT stored**:
+
 - Total expense amount (calculated: base + tax + tip)
 - How much each payer actually paid (calculated from split config)
 - How much each ower actually owes (calculated from split config + proportional tax/tip)
@@ -190,6 +199,7 @@ enum SplitMethod {
 ```
 
 **Key Fields**:
+
 - `groupMemberId`: References the GroupMember (persona) who paid
 - `splitMethod`: How this payer's contribution is calculated
 - `splitValue`:
@@ -198,12 +208,17 @@ enum SplitMethod {
   - Percentage for PERCENTAGE (e.g., 60.0 = 60%)
 
 **Example**: Multiple payers on $1000 expense
+
 ```javascript
 // Me pays 60%, Sarah pays 40%
 [
-  { groupMemberId: "member-me", splitMethod: "PERCENTAGE", splitValue: 60.0 },
-  { groupMemberId: "member-sarah", splitMethod: "PERCENTAGE", splitValue: 40.0 }
-]
+  { groupMemberId: 'member-me', splitMethod: 'PERCENTAGE', splitValue: 60.0 },
+  {
+    groupMemberId: 'member-sarah',
+    splitMethod: 'PERCENTAGE',
+    splitValue: 40.0,
+  },
+];
 
 // When displaying/editing: show exactly this
 // When calculating: Me paid $600, Sarah paid $400
@@ -234,12 +249,13 @@ model ExpenseOwer {
 **Key Fields**: Same as ExpensePayer - stores the split configuration, not the calculated amount.
 
 **Example**: $100 base + $10 tax + $20 tip
+
 ```javascript
 // Fixed amounts
 [
-  { groupMemberId: "member-alice", splitMethod: "FIXED", splitValue: 60.0 },
-  { groupMemberId: "member-bob", splitMethod: "FIXED", splitValue: 40.0 }
-]
+  { groupMemberId: 'member-alice', splitMethod: 'FIXED', splitValue: 60.0 },
+  { groupMemberId: 'member-bob', splitMethod: 'FIXED', splitValue: 40.0 },
+];
 
 // When displaying/editing: show "Alice: $60, Bob: $40"
 // When calculating:
@@ -248,6 +264,7 @@ model ExpenseOwer {
 ```
 
 **NOT stored**:
+
 - Base amount owed per person
 - Tax owed per person
 - Tip owed per person
@@ -279,6 +296,7 @@ model Settlement {
 ```
 
 **Key Fields**:
+
 - `fromGroupMemberId` → `toGroupMemberId`: Direction of payment (between personas)
 - `amount`: How much was paid (concrete dollar amount)
 - `recordedBy`: GroupMemberId of who recorded this (audit trail)
@@ -293,13 +311,15 @@ All of these are computed from the atomic data above:
 
 ```typescript
 function calculateTotalExpenseAmount(expense: Expense): number {
-  const taxAmount = expense.taxType === 'PERCENTAGE'
-    ? expense.baseAmount * (expense.taxAmount / 100)
-    : expense.taxAmount ?? 0;
+  const taxAmount =
+    expense.taxType === 'PERCENTAGE'
+      ? expense.baseAmount * (expense.taxAmount / 100)
+      : (expense.taxAmount ?? 0);
 
-  const tipAmount = expense.tipType === 'PERCENTAGE'
-    ? expense.baseAmount * (expense.tipAmount / 100)
-    : expense.tipAmount ?? 0;
+  const tipAmount =
+    expense.tipType === 'PERCENTAGE'
+      ? expense.baseAmount * (expense.tipAmount / 100)
+      : (expense.tipAmount ?? 0);
 
   return expense.baseAmount + taxAmount + tipAmount;
 }
@@ -312,18 +332,18 @@ function calculatePayerAmounts(expense: Expense): Map<string, number> {
   const payers = expense.payers;
   const results = new Map<string, number>(); // groupMemberId -> amount paid
 
-  if (payers.every(p => p.splitMethod === 'EVEN')) {
+  if (payers.every((p) => p.splitMethod === 'EVEN')) {
     // Even split
     const totalPaid = calculateTotalExpenseAmount(expense);
     const perPayer = totalPaid / payers.length;
-    payers.forEach(p => results.set(p.groupMemberId, perPayer));
-  } else if (payers.every(p => p.splitMethod === 'FIXED')) {
+    payers.forEach((p) => results.set(p.groupMemberId, perPayer));
+  } else if (payers.every((p) => p.splitMethod === 'FIXED')) {
     // Fixed amounts
-    payers.forEach(p => results.set(p.groupMemberId, p.splitValue!));
-  } else if (payers.every(p => p.splitMethod === 'PERCENTAGE')) {
+    payers.forEach((p) => results.set(p.groupMemberId, p.splitValue!));
+  } else if (payers.every((p) => p.splitMethod === 'PERCENTAGE')) {
     // Percentage split
     const totalPaid = calculateTotalExpenseAmount(expense);
-    payers.forEach(p => {
+    payers.forEach((p) => {
       const amount = totalPaid * (p.splitValue! / 100);
       results.set(p.groupMemberId, amount);
     });
@@ -343,13 +363,13 @@ function calculateOwerAmounts(expense: Expense): Map<string, number> {
   // Step 1: Calculate base amounts
   const baseAmounts = new Map<string, number>();
 
-  if (owers.every(o => o.splitMethod === 'EVEN')) {
+  if (owers.every((o) => o.splitMethod === 'EVEN')) {
     const perOwer = expense.baseAmount / owers.length;
-    owers.forEach(o => baseAmounts.set(o.groupMemberId, perOwer));
-  } else if (owers.every(o => o.splitMethod === 'FIXED')) {
-    owers.forEach(o => baseAmounts.set(o.groupMemberId, o.splitValue!));
-  } else if (owers.every(o => o.splitMethod === 'PERCENTAGE')) {
-    owers.forEach(o => {
+    owers.forEach((o) => baseAmounts.set(o.groupMemberId, perOwer));
+  } else if (owers.every((o) => o.splitMethod === 'FIXED')) {
+    owers.forEach((o) => baseAmounts.set(o.groupMemberId, o.splitValue!));
+  } else if (owers.every((o) => o.splitMethod === 'PERCENTAGE')) {
+    owers.forEach((o) => {
       const amount = expense.baseAmount * (o.splitValue! / 100);
       baseAmounts.set(o.groupMemberId, amount);
     });
@@ -359,13 +379,15 @@ function calculateOwerAmounts(expense: Expense): Map<string, number> {
   const totalBase = Array.from(baseAmounts.values()).reduce((a, b) => a + b, 0);
 
   // Step 3: Calculate tax and tip amounts
-  const taxAmount = expense.taxType === 'PERCENTAGE'
-    ? expense.baseAmount * (expense.taxAmount! / 100)
-    : expense.taxAmount ?? 0;
+  const taxAmount =
+    expense.taxType === 'PERCENTAGE'
+      ? expense.baseAmount * (expense.taxAmount! / 100)
+      : (expense.taxAmount ?? 0);
 
-  const tipAmount = expense.tipType === 'PERCENTAGE'
-    ? expense.baseAmount * (expense.tipAmount! / 100)
-    : expense.tipAmount ?? 0;
+  const tipAmount =
+    expense.tipType === 'PERCENTAGE'
+      ? expense.baseAmount * (expense.tipAmount! / 100)
+      : (expense.tipAmount ?? 0);
 
   // Step 4: Distribute proportionally
   baseAmounts.forEach((base, groupMemberId) => {
@@ -382,7 +404,9 @@ function calculateOwerAmounts(expense: Expense): Map<string, number> {
 ### 4. Calculate Net Balances
 
 ```typescript
-function calculateNetBalances(groupId: string): Map<string, Map<string, number>> {
+function calculateNetBalances(
+  groupId: string
+): Map<string, Map<string, number>> {
   // 1. Get all expenses for group
   // 2. For each expense:
   //    - Calculate who paid what (from calculatePayerAmounts)
@@ -430,6 +454,7 @@ function calculateNetBalances(groupId: string): Map<string, Map<string, number>>
 ## Example: Full Expense Record
 
 ### User Input
+
 ```
 Description: "Dinner at Mario's"
 Base Amount: $100
@@ -440,6 +465,7 @@ Owers: Me, Alice, Bob, Charlie (even split)
 ```
 
 ### Stored in Database
+
 ```javascript
 {
   // Expense table
@@ -468,6 +494,7 @@ Owers: Me, Alice, Bob, Charlie (even split)
 ```
 
 ### When Displaying (Calculated)
+
 ```javascript
 // Total expense: $100 + ($100 × 0.10) + $20 = $130
 
@@ -488,7 +515,9 @@ Owers: Me, Alice, Bob, Charlie (even split)
 ```
 
 ### When Editing
+
 Show exactly what was entered:
+
 - Base: $100
 - Tax: 10% (with toggle showing it's percentage)
 - Tip: $20 (with toggle showing it's fixed)
@@ -501,6 +530,7 @@ User can change any value and recalculation happens on save.
 ## Summary
 
 This schema design ensures:
+
 - ✅ Users see their exact input when editing
 - ✅ No cached calculations that can become stale
 - ✅ Single source of truth for all amounts

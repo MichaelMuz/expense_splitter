@@ -54,7 +54,9 @@ export function MemberList({
   return (
     <div className="bg-white shadow rounded-lg border border-gray-200">
       <div className="px-4 py-3 border-b border-gray-200">
-        <h3 className="text-lg font-semibold text-gray-900">Members ({members.length})</h3>
+        <h3 className="text-lg font-semibold text-gray-900">
+          Members ({members.length})
+        </h3>
       </div>
 
       <div className="divide-y divide-gray-200">

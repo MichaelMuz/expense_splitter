@@ -5,18 +5,29 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import { ExpenseForm } from '../components/expenses/ExpenseForm';
-import { useExpense, useCreateExpense, useUpdateExpense } from '../hooks/useExpenses';
+import {
+  useExpense,
+  useCreateExpense,
+  useUpdateExpense,
+} from '../hooks/useExpenses';
 import { useGroup } from '../hooks/useGroups';
 
 export default function AddExpensePage() {
-  const { groupId, expenseId } = useParams<{ groupId: string; expenseId?: string }>();
+  const { groupId, expenseId } = useParams<{
+    groupId: string;
+    expenseId?: string;
+  }>();
   const navigate = useNavigate();
   const isEditing = !!expenseId;
 
   const { data: group, isLoading: groupLoading } = useGroup(groupId!);
-  const { data: expense, isLoading: expenseLoading } = useExpense(groupId!, expenseId!, {
-    enabled: isEditing,
-  });
+  const { data: expense, isLoading: expenseLoading } = useExpense(
+    groupId!,
+    expenseId!,
+    {
+      enabled: isEditing,
+    }
+  );
   const createExpense = useCreateExpense(groupId!);
   const updateExpense = useUpdateExpense(groupId!, expenseId!);
 

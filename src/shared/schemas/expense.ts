@@ -9,15 +9,14 @@ import { calculateTotalExpenseAmount } from '../utils/calculations';
 import { money } from './fields';
 
 // TODO Would be really cool to use postgres data validation features for things like this
-export const TaxTipTypeEnum = z.nativeEnum($Enums.TaxTipType)
-export const SplitMethodEnum = z.nativeEnum($Enums.SplitMethod)
+export const TaxTipTypeEnum = z.nativeEnum($Enums.TaxTipType);
+export const SplitMethodEnum = z.nativeEnum($Enums.SplitMethod);
 
 // Param validation schema
 export const expenseParamsSchema = z.object({
   groupId: z.string().uuid('Invalid group ID'),
   expenseId: z.string().uuid('Invalid expense ID'),
 });
-
 
 // Payer and Ower schema
 export const expenseParticipant = z.object({
@@ -31,7 +30,7 @@ const expenseName = z
   .min(1, 'Expense name is required')
   .max(200, 'Expense name must be less than 200 characters');
 
-function expenseParticipants(type: "payers" | "owers") {
+function expenseParticipants(type: 'payers' | 'owers') {
   return z
     .array(expenseParticipant)
     .min(1, `At least one ${type} is required`)
@@ -46,26 +45,33 @@ function expenseParticipants(type: "payers" | "owers") {
     .refine(
       (participants) => {
         // Validate PERCENTAGE sums to 10000 (100.00%)
-        if (participants.length > 0 && participants[0]?.splitMethod === 'PERCENTAGE') {
-          const total = participants.reduce((sum, p) => sum + (p.splitValue || 0), 0);
+        if (
+          participants.length > 0 &&
+          participants[0]?.splitMethod === 'PERCENTAGE'
+        ) {
+          const total = participants.reduce(
+            (sum, p) => sum + (p.splitValue || 0),
+            0
+          );
           return total === 10000;
         }
         return true;
       },
       { message: 'Percentage splits must sum to 100%' }
-    )
+    );
 }
 
 function bothTaxTipOrNeither<K1 extends string, K2 extends string>(
   fieldName: 'Tax' | 'Tip',
   amountKey: K1,
-  typeKey: K2,
+  typeKey: K2
 ) {
   return tuple(
-    (data: Partial<Record<K1 | K2, unknown>>) => !!data[amountKey] === !!data[typeKey],
+    (data: Partial<Record<K1 | K2, unknown>>) =>
+      !!data[amountKey] === !!data[typeKey],
     {
       message: `${fieldName} requires both amount and type, or neither`,
-      path: [typeKey]  // error points to the type field
+      path: [typeKey], // error points to the type field
     }
   );
 }
@@ -76,13 +82,19 @@ function fixedSumsCorrectly(participantType: 'payers' | 'owers') {
       const participants = data[participantType];
       // TODO: We can get rid of this if we eventually move to mixed splitability in the future
       // require participant updates also update base amount to not break fixes split methods invariants
-      if (!!participants !== !!data.baseAmount) { return false }
+      if (!!participants !== !!data.baseAmount) {
+        return false;
+      }
       // they can be both undefined for an update
-      else if (!participants || !data.baseAmount) { return true }
-
+      else if (!participants || !data.baseAmount) {
+        return true;
+      }
 
       if (participants.length > 0 && participants[0]?.splitMethod === 'FIXED') {
-        const sum = participants.reduce((sum, p) => sum + (p.splitValue || 0), 0);
+        const sum = participants.reduce(
+          (sum, p) => sum + (p.splitValue || 0),
+          0
+        );
 
         if (participantType === 'payers') {
           const total = calculateTotalExpenseAmount({
@@ -101,17 +113,19 @@ function fixedSumsCorrectly(participantType: 'payers' | 'owers') {
     },
     {
       message: `Fixed ${participantType} must sum correctly and require base amount to be specified`,
-      path: [participantType]
+      path: [participantType],
     }
   );
 }
 
-function applyExpenseRefinements<T extends z.ZodType<Partial<z.infer<typeof expenseBaseSchema>>>>(schema: T) {
+function applyExpenseRefinements<
+  T extends z.ZodType<Partial<z.infer<typeof expenseBaseSchema>>>,
+>(schema: T) {
   return schema
     .refine(...bothTaxTipOrNeither('Tax', 'taxAmount', 'taxType'))
     .refine(...bothTaxTipOrNeither('Tip', 'tipAmount', 'tipType'))
     .refine(...fixedSumsCorrectly('payers'))
-    .refine(...fixedSumsCorrectly('owers'))
+    .refine(...fixedSumsCorrectly('owers'));
 }
 
 const expenseData = z.object({
@@ -124,13 +138,18 @@ const expenseData = z.object({
 
 const expenseBaseSchema = expenseData.extend({
   name: expenseName,
-  description: z.string().max(1000, 'Description must be less than 1000 characters').optional(),
-  payers: expenseParticipants("payers"),
-  owers: expenseParticipants("owers")
-})
+  description: z
+    .string()
+    .max(1000, 'Description must be less than 1000 characters')
+    .optional(),
+  payers: expenseParticipants('payers'),
+  owers: expenseParticipants('owers'),
+});
 
-export const createExpenseSchema = applyExpenseRefinements(expenseBaseSchema)
-export const updateExpenseSchema = applyExpenseRefinements(expenseBaseSchema.partial())
+export const createExpenseSchema = applyExpenseRefinements(expenseBaseSchema);
+export const updateExpenseSchema = applyExpenseRefinements(
+  expenseBaseSchema.partial()
+);
 
 export type ExpenseData = z.infer<typeof expenseData>;
 export type ExpenseParams = z.infer<typeof expenseParamsSchema>;

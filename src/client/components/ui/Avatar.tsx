@@ -11,7 +11,12 @@ interface AvatarProps {
   className?: string;
 }
 
-export function Avatar({ name, src, size = 'md', className = '' }: AvatarProps) {
+export function Avatar({
+  name,
+  src,
+  size = 'md',
+  className = '',
+}: AvatarProps) {
   const sizeStyles = {
     xs: 'w-6 h-6 text-xs',
     sm: 'w-8 h-8 text-sm',
@@ -25,12 +30,10 @@ export function Avatar({ name, src, size = 'md', className = '' }: AvatarProps) 
 
   if (src) {
     return (
-      <div className={`${sizeStyles[size]} rounded-full overflow-hidden flex items-center justify-center ${className}`}>
-        <img
-          src={src}
-          alt={name}
-          className="w-full h-full object-cover"
-        />
+      <div
+        className={`${sizeStyles[size]} rounded-full overflow-hidden flex items-center justify-center ${className}`}
+      >
+        <img src={src} alt={name} className="w-full h-full object-cover" />
       </div>
     );
   }

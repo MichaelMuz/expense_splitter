@@ -32,7 +32,7 @@ export const joinInviteSchema = z.discriminatedUnion('type', [
   z.object({
     type: z.literal('new'),
     userName: memberName,
-  })
+  }),
 ]);
 
 // Member schemas

@@ -5,7 +5,10 @@
 import { forwardRef, type InputHTMLAttributes, useState } from 'react';
 import { DollarSign } from 'lucide-react';
 
-interface CurrencyInputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'type'> {
+interface CurrencyInputProps extends Omit<
+  InputHTMLAttributes<HTMLInputElement>,
+  'type'
+> {
   label?: string;
   error?: string;
   helperText?: string;
@@ -13,7 +16,18 @@ interface CurrencyInputProps extends Omit<InputHTMLAttributes<HTMLInputElement>,
 }
 
 export const CurrencyInput = forwardRef<HTMLInputElement, CurrencyInputProps>(
-  ({ label, error, helperText, currency = 'USD', className = '', onBlur, ...props }, ref) => {
+  (
+    {
+      label,
+      error,
+      helperText,
+      currency = 'USD',
+      className = '',
+      onBlur,
+      ...props
+    },
+    ref
+  ) => {
     const [displayValue, setDisplayValue] = useState('');
 
     const formatCurrency = (value: string) => {
@@ -77,9 +91,7 @@ export const CurrencyInput = forwardRef<HTMLInputElement, CurrencyInputProps>(
           </p>
         )}
         {!error && helperText && (
-          <p className="mt-1.5 text-sm text-neutral-500">
-            {helperText}
-          </p>
+          <p className="mt-1.5 text-sm text-neutral-500">{helperText}</p>
         )}
       </div>
     );

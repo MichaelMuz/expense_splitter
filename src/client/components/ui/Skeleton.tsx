@@ -22,8 +22,16 @@ export function Skeleton({
   };
 
   const style = {
-    width: width ? (typeof width === 'number' ? `${width}px` : width) : undefined,
-    height: height ? (typeof height === 'number' ? `${height}px` : height) : undefined,
+    width: width
+      ? typeof width === 'number'
+        ? `${width}px`
+        : width
+      : undefined,
+    height: height
+      ? typeof height === 'number'
+        ? `${height}px`
+        : height
+      : undefined,
   };
 
   return (
@@ -57,5 +65,7 @@ export function SkeletonAvatar({ size = 'md' }: { size?: 'sm' | 'md' | 'lg' }) {
     lg: 48,
   };
 
-  return <Skeleton variant="circular" width={sizes[size]} height={sizes[size]} />;
+  return (
+    <Skeleton variant="circular" width={sizes[size]} height={sizes[size]} />
+  );
 }

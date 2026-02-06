@@ -3,18 +3,33 @@
  * Handles CRUD operations for expenses within groups
  */
 
-import { Router, type Request, type Response, type NextFunction } from 'express';
+import {
+  Router,
+  type Request,
+  type Response,
+  type NextFunction,
+} from 'express';
 import { prisma } from '../lib/prisma';
 import { checkGroupMembership } from '../middleware/group-membership';
 import { authenticateToken } from '../middleware/auth';
 import { validateBody, validateParams } from '../middleware/validate';
-import { createExpenseSchema, updateExpenseSchema, type CreateExpenseInput, type UpdateExpenseInput, expenseParamsSchema } from '../../shared/schemas/expense';
+import {
+  createExpenseSchema,
+  updateExpenseSchema,
+  type CreateExpenseInput,
+  type UpdateExpenseInput,
+  expenseParamsSchema,
+} from '../../shared/schemas/expense';
 import {
   calculateTotalExpenseAmount,
   calculatePayerAmounts,
   calculateOwerAmounts,
 } from '../../shared/utils/calculations';
-import type { ExpenseData, PayerInput, OwerInput } from '../../shared/schemas/expense'
+import type {
+  ExpenseData,
+  PayerInput,
+  OwerInput,
+} from '../../shared/schemas/expense';
 import { Prisma } from '@prisma/client';
 import { groupIdParamSchema } from '@/shared/schemas/group';
 
@@ -44,7 +59,9 @@ const expenseWithRelations = Prisma.validator<Prisma.ExpenseDefaultArgs>()({
     },
   },
 });
-type ExpenseWithRelations = Prisma.ExpenseGetPayload<typeof expenseWithRelations>;
+type ExpenseWithRelations = Prisma.ExpenseGetPayload<
+  typeof expenseWithRelations
+>;
 
 /**
  * Helper function to format expense with calculated amounts
@@ -58,13 +75,13 @@ function formatExpenseWithCalculations(expense: ExpenseWithRelations) {
     tipType: expense.tipType,
   };
 
-  const payers: PayerInput[] = expense.payers.map(p => ({
+  const payers: PayerInput[] = expense.payers.map((p) => ({
     groupMemberId: p.groupMemberId,
     splitMethod: p.splitMethod,
     splitValue: p.splitValue,
   }));
 
-  const owers: OwerInput[] = expense.owers.map(o => ({
+  const owers: OwerInput[] = expense.owers.map((o) => ({
     groupMemberId: o.groupMemberId,
     splitMethod: o.splitMethod,
     splitValue: o.splitValue,
@@ -86,14 +103,14 @@ function formatExpenseWithCalculations(expense: ExpenseWithRelations) {
     tipType: expense.tipType,
     totalAmount,
     createdAt: expense.createdAt,
-    payers: expense.payers.map(p => ({
+    payers: expense.payers.map((p) => ({
       groupMemberId: p.groupMemberId,
       groupMember: p.groupMember,
       splitMethod: p.splitMethod,
       splitValue: p.splitValue,
       calculatedAmount: payerAmounts.get(p.groupMemberId) || 0,
     })),
-    owers: expense.owers.map(o => ({
+    owers: expense.owers.map((o) => ({
       groupMemberId: o.groupMemberId,
       groupMember: o.groupMember,
       splitMethod: o.splitMethod,
@@ -106,14 +123,18 @@ function formatExpenseWithCalculations(expense: ExpenseWithRelations) {
 /**
  * Middleware to check that the owers and payers specified are part of the group
  */
-async function checkOwersPayersGroupMembership(req: Request, res: Response, next: NextFunction) {
+async function checkOwersPayersGroupMembership(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
   const groupId = req.params.groupId!; // Validated by middleware running before this
   const owers = req.body.owers as UpdateExpenseInput['owers'];
   const payers = req.body.payers as UpdateExpenseInput['payers'];
 
   const allMemberIds = [
-    ...(payers?.map(p => p.groupMemberId) || []),
-    ...(owers?.map(o => o.groupMemberId) || []),
+    ...(payers?.map((p) => p.groupMemberId) || []),
+    ...(owers?.map((o) => o.groupMemberId) || []),
   ];
   const uniqueMemberIds = [...new Set(allMemberIds)];
 
@@ -193,21 +214,21 @@ router.post(
           tipAmount: expenseData.tipAmount,
           tipType: expenseData.tipType,
           payers: {
-            create: expenseData.payers.map(p => ({
+            create: expenseData.payers.map((p) => ({
               groupMemberId: p.groupMemberId,
               splitMethod: p.splitMethod,
               splitValue: p.splitValue,
             })),
           },
           owers: {
-            create: expenseData.owers.map(o => ({
+            create: expenseData.owers.map((o) => ({
               groupMemberId: o.groupMemberId,
               splitMethod: o.splitMethod,
               splitValue: o.splitValue,
             })),
           },
         },
-        ...expenseWithRelations
+        ...expenseWithRelations,
       });
 
       // Format with calculations
@@ -239,7 +260,7 @@ router.get(
           id: expenseId,
           groupId,
         },
-        ...expenseWithRelations
+        ...expenseWithRelations,
       });
 
       if (!expense) {
@@ -300,7 +321,7 @@ router.patch(
           ...(updateData.payers && {
             payers: {
               deleteMany: {},
-              create: updateData.payers.map(p => ({
+              create: updateData.payers.map((p) => ({
                 groupMemberId: p.groupMemberId,
                 splitMethod: p.splitMethod,
                 splitValue: p.splitValue,
@@ -310,7 +331,7 @@ router.patch(
           ...(updateData.owers && {
             owers: {
               deleteMany: {},
-              create: updateData.owers.map(o => ({
+              create: updateData.owers.map((o) => ({
                 groupMemberId: o.groupMemberId,
                 splitMethod: o.splitMethod,
                 splitValue: o.splitValue,
@@ -318,7 +339,7 @@ router.patch(
             },
           }),
         },
-        ...expenseWithRelations
+        ...expenseWithRelations,
       });
 
       // Format with calculations
@@ -357,7 +378,7 @@ router.delete(
         return;
       }
 
-      res.status(204).send()
+      res.status(204).send();
     } catch (error) {
       next(error);
     }

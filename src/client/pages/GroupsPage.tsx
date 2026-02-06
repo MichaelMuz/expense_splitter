@@ -41,7 +41,9 @@ export default function GroupsPage() {
         {groups && groups.length === 0 && (
           <Card>
             <div className="text-center py-12">
-              <p className="text-gray-600 mb-4">You're not part of any groups yet.</p>
+              <p className="text-gray-600 mb-4">
+                You're not part of any groups yet.
+              </p>
               <div className="flex gap-3 justify-center">
                 <Link to="/groups/create">
                   <Button>Create Your First Group</Button>
@@ -61,13 +63,17 @@ export default function GroupsPage() {
                 <Card className="hover:shadow-lg transition-shadow cursor-pointer">
                   <div className="flex justify-between items-start">
                     <div>
-                      <h2 className="text-xl font-semibold mb-2">{group.name}</h2>
+                      <h2 className="text-xl font-semibold mb-2">
+                        {group.name}
+                      </h2>
                       <p className="text-gray-600 text-sm">
-                        {group.members.length} member{group.members.length !== 1 ? 's' : ''}
+                        {group.members.length} member
+                        {group.members.length !== 1 ? 's' : ''}
                       </p>
                       {group._count && (
                         <p className="text-gray-600 text-sm">
-                          {group._count.expenses} expense{group._count.expenses !== 1 ? 's' : ''}
+                          {group._count.expenses} expense
+                          {group._count.expenses !== 1 ? 's' : ''}
                         </p>
                       )}
                     </div>

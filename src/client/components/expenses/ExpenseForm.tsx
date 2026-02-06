@@ -7,7 +7,11 @@ import { toCents, toDollars } from '../../../shared/utils/currency';
 import { SplitMethodPicker } from './SplitMethodPicker';
 import { PayerSelector } from './PayerSelector';
 import { OwerSelector } from './OwerSelector';
-import type { CreateExpenseInput, PayerInput, OwerInput } from '../../../shared/schemas/expense';
+import type {
+  CreateExpenseInput,
+  PayerInput,
+  OwerInput,
+} from '../../../shared/schemas/expense';
 
 type SplitMethod = 'EVEN' | 'FIXED' | 'PERCENTAGE';
 type TaxTipType = 'FIXED' | 'PERCENTAGE';
@@ -34,14 +38,18 @@ export function ExpenseForm({
 }: ExpenseFormProps) {
   // Basic fields
   const [name, setName] = useState(initialData?.name || '');
-  const [description, setDescription] = useState(initialData?.description || '');
+  const [description, setDescription] = useState(
+    initialData?.description || ''
+  );
   const [baseAmount, setBaseAmount] = useState(
     initialData?.baseAmount ? toDollars(initialData.baseAmount).toFixed(2) : ''
   );
 
   // Tax fields
   const [includeTax, setIncludeTax] = useState(!!initialData?.taxAmount);
-  const [taxType, setTaxType] = useState<TaxTipType>(initialData?.taxType || 'PERCENTAGE');
+  const [taxType, setTaxType] = useState<TaxTipType>(
+    initialData?.taxType || 'PERCENTAGE'
+  );
   const [taxAmount, setTaxAmount] = useState(
     initialData?.taxAmount
       ? initialData.taxType === 'PERCENTAGE'
@@ -52,7 +60,9 @@ export function ExpenseForm({
 
   // Tip fields
   const [includeTip, setIncludeTip] = useState(!!initialData?.tipAmount);
-  const [tipType, setTipType] = useState<TaxTipType>(initialData?.tipType || 'PERCENTAGE');
+  const [tipType, setTipType] = useState<TaxTipType>(
+    initialData?.tipType || 'PERCENTAGE'
+  );
   const [tipAmount, setTipAmount] = useState(
     initialData?.tipAmount
       ? initialData.tipType === 'PERCENTAGE'
@@ -126,17 +136,19 @@ export function ExpenseForm({
       name,
       description,
       baseAmount: baseAmountCents,
-      taxAmount: includeTax && taxAmount
-        ? taxType === 'PERCENTAGE'
-          ? Math.round(parseFloat(taxAmount) * 100) // Convert to basis points
-          : toCents(parseFloat(taxAmount))
-        : null,
+      taxAmount:
+        includeTax && taxAmount
+          ? taxType === 'PERCENTAGE'
+            ? Math.round(parseFloat(taxAmount) * 100) // Convert to basis points
+            : toCents(parseFloat(taxAmount))
+          : null,
       taxType: includeTax && taxAmount ? taxType : null,
-      tipAmount: includeTip && tipAmount
-        ? tipType === 'PERCENTAGE'
-          ? Math.round(parseFloat(tipAmount) * 100) // Convert to basis points
-          : toCents(parseFloat(tipAmount))
-        : null,
+      tipAmount:
+        includeTip && tipAmount
+          ? tipType === 'PERCENTAGE'
+            ? Math.round(parseFloat(tipAmount) * 100) // Convert to basis points
+            : toCents(parseFloat(tipAmount))
+          : null,
       tipType: includeTip && tipAmount ? tipType : null,
       payers,
       owers,
@@ -151,7 +163,10 @@ export function ExpenseForm({
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Basic Information */}
       <div>
-        <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+        <label
+          htmlFor="name"
+          className="block text-sm font-medium text-gray-700 mb-1"
+        >
           Expense Name *
         </label>
         <input
@@ -167,7 +182,10 @@ export function ExpenseForm({
       </div>
 
       <div>
-        <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
+        <label
+          htmlFor="description"
+          className="block text-sm font-medium text-gray-700 mb-1"
+        >
           Description (optional)
         </label>
         <textarea
@@ -183,7 +201,10 @@ export function ExpenseForm({
 
       {/* Amount */}
       <div>
-        <label htmlFor="baseAmount" className="block text-sm font-medium text-gray-700 mb-1">
+        <label
+          htmlFor="baseAmount"
+          className="block text-sm font-medium text-gray-700 mb-1"
+        >
           Base Amount * ($)
         </label>
         <input
@@ -208,7 +229,9 @@ export function ExpenseForm({
             onChange={(e) => setIncludeTax(e.target.checked)}
             className="h-4 w-4 text-blue-600 rounded border-gray-300"
           />
-          <span className="ml-2 text-sm font-medium text-gray-700">Include Tax</span>
+          <span className="ml-2 text-sm font-medium text-gray-700">
+            Include Tax
+          </span>
         </label>
 
         {includeTax && (
@@ -248,7 +271,9 @@ export function ExpenseForm({
                 className="flex-1 px-3 py-2 border border-gray-300 rounded-md"
                 placeholder={taxType === 'PERCENTAGE' ? '0.00' : '0.00'}
               />
-              {taxType === 'PERCENTAGE' && <span className="text-gray-500">%</span>}
+              {taxType === 'PERCENTAGE' && (
+                <span className="text-gray-500">%</span>
+              )}
             </div>
           </div>
         )}
@@ -263,7 +288,9 @@ export function ExpenseForm({
             onChange={(e) => setIncludeTip(e.target.checked)}
             className="h-4 w-4 text-blue-600 rounded border-gray-300"
           />
-          <span className="ml-2 text-sm font-medium text-gray-700">Include Tip</span>
+          <span className="ml-2 text-sm font-medium text-gray-700">
+            Include Tip
+          </span>
         </label>
 
         {includeTip && (
@@ -303,7 +330,9 @@ export function ExpenseForm({
                 className="flex-1 px-3 py-2 border border-gray-300 rounded-md"
                 placeholder={tipType === 'PERCENTAGE' ? '0.00' : '0.00'}
               />
-              {tipType === 'PERCENTAGE' && <span className="text-gray-500">%</span>}
+              {tipType === 'PERCENTAGE' && (
+                <span className="text-gray-500">%</span>
+              )}
             </div>
           </div>
         )}
@@ -312,7 +341,9 @@ export function ExpenseForm({
       {/* Total */}
       <div className="bg-gray-50 border border-gray-200 rounded-md p-4">
         <div className="flex justify-between items-center">
-          <span className="text-lg font-semibold text-gray-700">Total Amount:</span>
+          <span className="text-lg font-semibold text-gray-700">
+            Total Amount:
+          </span>
           <span className="text-2xl font-bold text-gray-900">
             ${toDollars(totalAmount).toFixed(2)}
           </span>
@@ -367,10 +398,20 @@ export function ExpenseForm({
         </button>
         <button
           type="submit"
-          disabled={isSubmitting || !name || !baseAmount || payers.length === 0 || owers.length === 0}
+          disabled={
+            isSubmitting ||
+            !name ||
+            !baseAmount ||
+            payers.length === 0 ||
+            owers.length === 0
+          }
           className="flex-1 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {isSubmitting ? 'Saving...' : initialData ? 'Update Expense' : 'Create Expense'}
+          {isSubmitting
+            ? 'Saving...'
+            : initialData
+              ? 'Update Expense'
+              : 'Create Expense'}
         </button>
       </div>
     </form>

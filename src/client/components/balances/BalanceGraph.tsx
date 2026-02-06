@@ -35,7 +35,9 @@ export function BalanceGraph({ groupId, onSettle }: BalanceGraphProps) {
       <Card variant="bordered" className="bg-danger-50 border-danger-200">
         <div className="flex items-center gap-3 text-danger-800">
           <AlertTriangle size={24} />
-          <p className="font-medium">Failed to load balance details. Please try again.</p>
+          <p className="font-medium">
+            Failed to load balance details. Please try again.
+          </p>
         </div>
       </Card>
     );
@@ -54,8 +56,12 @@ export function BalanceGraph({ groupId, onSettle }: BalanceGraphProps) {
   return (
     <div className="space-y-4">
       <div className="mb-6">
-        <h3 className="text-xl font-bold text-neutral-800 mb-2">Who Owes Whom</h3>
-        <p className="text-sm text-neutral-500">Outstanding balances between members</p>
+        <h3 className="text-xl font-bold text-neutral-800 mb-2">
+          Who Owes Whom
+        </h3>
+        <p className="text-sm text-neutral-500">
+          Outstanding balances between members
+        </p>
       </div>
 
       <AnimatePresence mode="popLayout">
@@ -74,7 +80,9 @@ export function BalanceGraph({ groupId, onSettle }: BalanceGraphProps) {
                 <div className="flex items-center gap-3">
                   <Avatar name={balance.from.name} size="lg" />
                   <div>
-                    <p className="font-semibold text-neutral-800">{balance.from.name}</p>
+                    <p className="font-semibold text-neutral-800">
+                      {balance.from.name}
+                    </p>
                     <p className="text-xs text-neutral-500">owes</p>
                   </div>
                 </div>
@@ -90,7 +98,9 @@ export function BalanceGraph({ groupId, onSettle }: BalanceGraphProps) {
                 {/* To Member */}
                 <div className="flex items-center gap-3">
                   <div className="text-right">
-                    <p className="font-semibold text-neutral-800">{balance.to.name}</p>
+                    <p className="font-semibold text-neutral-800">
+                      {balance.to.name}
+                    </p>
                     <p className="text-xs text-neutral-500">receives</p>
                   </div>
                   <Avatar name={balance.to.name} size="lg" />
@@ -100,7 +110,9 @@ export function BalanceGraph({ groupId, onSettle }: BalanceGraphProps) {
                 {onSettle && (
                   <div className="ml-4">
                     <Button
-                      onClick={() => onSettle(balance.from.id, balance.to.id, balance.amount)}
+                      onClick={() =>
+                        onSettle(balance.from.id, balance.to.id, balance.amount)
+                      }
                       variant="primary"
                       size="sm"
                       leftIcon={<CheckCircle2 size={16} />}

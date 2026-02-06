@@ -32,7 +32,9 @@ export function BalanceSummary({ groupId }: BalanceSummaryProps) {
       <Card variant="bordered" className="bg-danger-50 border-danger-200">
         <div className="flex items-center gap-3 text-danger-800">
           <AlertTriangle size={24} />
-          <p className="font-medium">Failed to load balances. Please try again.</p>
+          <p className="font-medium">
+            Failed to load balances. Please try again.
+          </p>
         </div>
       </Card>
     );
@@ -51,14 +53,17 @@ export function BalanceSummary({ groupId }: BalanceSummaryProps) {
   const sortedSummary = [...data.summary].sort((a, b) => b.balance - a.balance);
 
   // Find the maximum absolute balance for progress bar scaling
-  const maxBalance = Math.max(...sortedSummary.map(m => Math.abs(m.balance)));
+  const maxBalance = Math.max(...sortedSummary.map((m) => Math.abs(m.balance)));
 
   return (
     <Card>
       <div className="mb-6">
-        <h3 className="text-xl font-bold text-neutral-800 mb-2">Member Balances</h3>
+        <h3 className="text-xl font-bold text-neutral-800 mb-2">
+          Member Balances
+        </h3>
         <p className="text-sm text-neutral-500">
-          Positive amounts are owed to the member, negative amounts are owed by the member
+          Positive amounts are owed to the member, negative amounts are owed by
+          the member
         </p>
       </div>
 
@@ -67,7 +72,8 @@ export function BalanceSummary({ groupId }: BalanceSummaryProps) {
           const balance = memberBalance.balance;
           const isPositive = balance > 0;
           const isZero = balance === 0;
-          const percentage = maxBalance > 0 ? (Math.abs(balance) / maxBalance) * 100 : 0;
+          const percentage =
+            maxBalance > 0 ? (Math.abs(balance) / maxBalance) * 100 : 0;
 
           return (
             <div key={memberBalance.member.id} className="space-y-2">
@@ -84,15 +90,19 @@ export function BalanceSummary({ groupId }: BalanceSummaryProps) {
                       isZero
                         ? 'text-neutral-500'
                         : isPositive
-                        ? 'text-success-600'
-                        : 'text-danger-600'
+                          ? 'text-success-600'
+                          : 'text-danger-600'
                     }`}
                   >
                     {isPositive && '+'}
                     {formatCurrency(balance)}
                   </span>
-                  {isZero && <CheckCircle size={20} className="text-success-500" />}
-                  {!isZero && !isPositive && <AlertTriangle size={20} className="text-danger-500" />}
+                  {isZero && (
+                    <CheckCircle size={20} className="text-success-500" />
+                  )}
+                  {!isZero && !isPositive && (
+                    <AlertTriangle size={20} className="text-danger-500" />
+                  )}
                 </div>
               </div>
 
@@ -104,8 +114,8 @@ export function BalanceSummary({ groupId }: BalanceSummaryProps) {
                       isZero
                         ? 'bg-neutral-300'
                         : isPositive
-                        ? 'bg-gradient-to-r from-success-400 to-success-600'
-                        : 'bg-gradient-to-r from-danger-400 to-danger-600'
+                          ? 'bg-gradient-to-r from-success-400 to-success-600'
+                          : 'bg-gradient-to-r from-danger-400 to-danger-600'
                     }`}
                     style={{ width: `${percentage}%` }}
                   />

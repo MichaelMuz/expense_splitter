@@ -9,9 +9,14 @@ declare global {
   var __prismaSingletonForHotReload: PrismaClient | undefined;
 }
 
-global.__prismaSingletonForHotReload = global.__prismaSingletonForHotReload || new PrismaClient({
-  log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
-});
+global.__prismaSingletonForHotReload =
+  global.__prismaSingletonForHotReload ||
+  new PrismaClient({
+    log:
+      process.env.NODE_ENV === 'development'
+        ? ['query', 'error', 'warn']
+        : ['error'],
+  });
 export const prisma = global.__prismaSingletonForHotReload;
 
 process.on('beforeExit', async () => {

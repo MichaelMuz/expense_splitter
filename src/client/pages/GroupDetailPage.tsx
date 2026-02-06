@@ -33,7 +33,9 @@ export default function GroupDetailPage() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md">
-          <p className="text-red-800">Failed to load group. Please try again.</p>
+          <p className="text-red-800">
+            Failed to load group. Please try again.
+          </p>
           <button
             onClick={() => navigate('/')}
             className="mt-4 px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700"
@@ -53,8 +55,14 @@ export default function GroupDetailPage() {
     navigate(`/groups/${groupId}/expenses/${expenseId}/edit`);
   };
 
-  const handleRecordSettlement = (fromId: string, toId: string, amount: number) => {
-    navigate(`/groups/${groupId}/settlements/new?from=${fromId}&to=${toId}&amount=${amount}`);
+  const handleRecordSettlement = (
+    fromId: string,
+    toId: string,
+    amount: number
+  ) => {
+    navigate(
+      `/groups/${groupId}/settlements/new?from=${fromId}&to=${toId}&amount=${amount}`
+    );
   };
 
   return (
@@ -131,7 +139,10 @@ export default function GroupDetailPage() {
         {activeTab === 'balances' && (
           <div className="space-y-6">
             <BalanceSummary groupId={groupId!} />
-            <BalanceGraph groupId={groupId!} onSettle={handleRecordSettlement} />
+            <BalanceGraph
+              groupId={groupId!}
+              onSettle={handleRecordSettlement}
+            />
           </div>
         )}
 

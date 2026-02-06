@@ -2,10 +2,22 @@
  * Auth context and hook for managing authentication state
  */
 
-import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  type ReactNode,
+} from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '../lib/api';
-import { setToken, getToken, removeToken, type User, type AuthResponse } from '../lib/auth';
+import {
+  setToken,
+  getToken,
+  removeToken,
+  type User,
+  type AuthResponse,
+} from '../lib/auth';
 import type { LoginInput, SignupInput } from '@/shared/schemas/auth';
 
 interface AuthContextValue {
@@ -64,7 +76,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Signup mutation
   const signupMutation = useMutation({
     mutationFn: async (credentials: SignupInput) => {
-      const response = await api.post<AuthResponse>('/auth/signup', credentials);
+      const response = await api.post<AuthResponse>(
+        '/auth/signup',
+        credentials
+      );
       return response.data;
     },
     onSuccess: (data) => {

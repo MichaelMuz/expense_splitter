@@ -30,7 +30,10 @@ export default function JoinGroupPage() {
       const result = await joinGroup.mutateAsync(inviteCode.trim());
       navigate(`/groups/${result.group.id}`);
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to join group. Please check the invite code.');
+      setError(
+        err.response?.data?.message ||
+          'Failed to join group. Please check the invite code.'
+      );
     }
   };
 

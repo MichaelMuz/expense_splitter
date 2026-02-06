@@ -11,7 +11,12 @@ interface BadgeProps {
   className?: string;
 }
 
-export function Badge({ variant = 'neutral', size = 'md', children, className = '' }: BadgeProps) {
+export function Badge({
+  variant = 'neutral',
+  size = 'md',
+  children,
+  className = '',
+}: BadgeProps) {
   const variantStyles = {
     success: 'bg-success-100 text-success-700 border-success-200',
     warning: 'bg-warning-100 text-warning-700 border-warning-200',

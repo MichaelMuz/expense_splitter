@@ -40,7 +40,9 @@ export default function SignupPage() {
       await signup({ email, password });
       navigate('/groups');
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Signup failed. Please try again.');
+      setError(
+        err.response?.data?.message || 'Signup failed. Please try again.'
+      );
     } finally {
       setIsLoading(false);
     }
@@ -93,7 +95,10 @@ export default function SignupPage() {
 
           <div className="mt-4 text-center text-sm text-gray-600">
             Already have an account?{' '}
-            <Link to="/login" className="text-blue-600 hover:text-blue-700 font-semibold">
+            <Link
+              to="/login"
+              className="text-blue-600 hover:text-blue-700 font-semibold"
+            >
               Login
             </Link>
           </div>

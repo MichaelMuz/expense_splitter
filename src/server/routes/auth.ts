@@ -9,7 +9,12 @@ import { hashPassword, comparePassword } from '../lib/password';
 import { signToken } from '../lib/jwt';
 import { validateBody } from '../middleware/validate';
 import { authenticateToken } from '../middleware/auth';
-import { signupSchema, loginSchema, type SignupInput, type LoginInput } from '../../shared/schemas/auth';
+import {
+  signupSchema,
+  loginSchema,
+  type SignupInput,
+  type LoginInput,
+} from '../../shared/schemas/auth';
 
 const router = Router();
 

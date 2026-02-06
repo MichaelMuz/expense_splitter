@@ -36,7 +36,9 @@ export function ExpenseList({ groupId, onEditExpense }: ExpenseListProps) {
   if (error) {
     return (
       <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-        <p className="text-red-800">Failed to load expenses. Please try again.</p>
+        <p className="text-red-800">
+          Failed to load expenses. Please try again.
+        </p>
       </div>
     );
   }
@@ -45,7 +47,9 @@ export function ExpenseList({ groupId, onEditExpense }: ExpenseListProps) {
     return (
       <div className="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center">
         <p className="text-gray-600 mb-2">No expenses yet</p>
-        <p className="text-sm text-gray-500">Add your first expense to get started!</p>
+        <p className="text-sm text-gray-500">
+          Add your first expense to get started!
+        </p>
       </div>
     );
   }

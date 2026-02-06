@@ -15,7 +15,20 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ label, error, helperText, leftIcon, rightIcon, size = 'md', success = false, className = '', ...props }, ref) => {
+  (
+    {
+      label,
+      error,
+      helperText,
+      leftIcon,
+      rightIcon,
+      size = 'md',
+      success = false,
+      className = '',
+      ...props
+    },
+    ref
+  ) => {
     const sizeStyles = {
       sm: 'px-3 py-1.5 text-sm',
       md: 'px-3 py-2.5 text-base',
@@ -60,9 +73,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           </p>
         )}
         {!error && helperText && (
-          <p className="mt-1.5 text-sm text-neutral-500">
-            {helperText}
-          </p>
+          <p className="mt-1.5 text-sm text-neutral-500">{helperText}</p>
         )}
       </div>
     );

@@ -15,7 +15,13 @@ interface ModalProps {
   size?: 'sm' | 'md' | 'lg' | 'xl';
 }
 
-export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalProps) {
+export function Modal({
+  isOpen,
+  onClose,
+  title,
+  children,
+  size = 'md',
+}: ModalProps) {
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
@@ -85,9 +91,7 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
             )}
 
             {/* Content */}
-            <div className={!title ? 'pt-6' : ''}>
-              {children}
-            </div>
+            <div className={!title ? 'pt-6' : ''}>{children}</div>
           </motion.div>
         </div>
       )}

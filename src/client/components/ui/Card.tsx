@@ -45,7 +45,9 @@ export function Card({
       <motion.div
         className={baseStyles}
         onClick={onClick}
-        whileHover={hover || onClick ? { ...hoverLift, ...hoverGlow } : undefined}
+        whileHover={
+          hover || onClick ? { ...hoverLift, ...hoverGlow } : undefined
+        }
         transition={{ duration: 0.2 }}
       >
         {children}
@@ -53,9 +55,5 @@ export function Card({
     );
   }
 
-  return (
-    <div className={baseStyles}>
-      {children}
-    </div>
-  );
+  return <div className={baseStyles}>{children}</div>;
 }

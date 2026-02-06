@@ -104,11 +104,14 @@ router.use(
     const isOwner = groupMembership.role === 'owner';
     const isOwnProfile = memberId === groupMembership.id;
     if (!isOwner && !isOwnProfile) {
-      res.status(403).json({ error: 'You can only edit yourself unless you are the group owner' });
+      res.status(403).json({
+        error: 'You can only edit yourself unless you are the group owner',
+      });
       return;
     }
     next();
-  })
+  }
+);
 
 /**
  * PATCH /api/groups/:groupId/members/:memberId
@@ -128,7 +131,7 @@ router.patch(
         // update the member if they belong to the group
         const result = await prisma.groupMember.updateMany({
           where: { groupId: groupId, id: memberId },
-          data: { name: name }
+          data: { name: name },
         });
         if (result.count === 0) {
           return null;
@@ -136,15 +139,14 @@ router.patch(
         // return the updated member
         const updatedMember = await prisma.groupMember.findUnique({
           where: { id: memberId },
-        })
-        return updatedMember
-      })()
+        });
+        return updatedMember;
+      })();
       if (!updatedMember) {
         res.status(404).json({ error: 'Member not found' });
-        return
+        return;
       }
       res.json({ member: updatedMember });
-
     } catch (error) {
       next(error);
     }
@@ -167,22 +169,28 @@ router.delete(
         where: { groupId: groupId, id: memberId },
         include: {
           _count: {
-            select: { owedExpenses: true, paidExpenses: true }
-          }
-        }
-      })
+            select: { owedExpenses: true, paidExpenses: true },
+          },
+        },
+      });
 
       if (!memberToRemove) {
         res.status(404).json({ error: 'Member not found' });
         return;
       }
-      if (memberToRemove._count.paidExpenses > 0 || memberToRemove._count.owedExpenses > 0) {
-        res.status(409).json({ error: 'Cannot remove member with existing expenses. Delete expenses first.' });
-        return
+      if (
+        memberToRemove._count.paidExpenses > 0 ||
+        memberToRemove._count.owedExpenses > 0
+      ) {
+        res.status(409).json({
+          error:
+            'Cannot remove member with existing expenses. Delete expenses first.',
+        });
+        return;
       }
       if (memberToRemove.role === 'owner') {
         res.status(403).json({ error: 'Cannot remove the group owner' });
-        return
+        return;
       }
 
       // Delete member

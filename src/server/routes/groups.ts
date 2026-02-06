@@ -26,14 +26,14 @@ const groupWithMembersAndExpenseCount = {
         role: true,
         userId: true,
         joinedAt: true,
-      }
+      },
     },
     _count: {
       select: {
         expenses: true,
       },
-    }
-  }
+    },
+  },
 } as const;
 
 const router = Router();
@@ -52,7 +52,7 @@ router.get(
 
       const group = await prisma.group.findFirst({
         where: { inviteCode },
-        ...groupWithMembersAndExpenseCount
+        ...groupWithMembersAndExpenseCount,
       });
       if (!group) {
         res.status(404).json({ error: 'Group not found' });
@@ -101,14 +101,18 @@ router.post(
       );
 
       if (existingMember) {
-        res.status(409).json({ error: 'You are already a member of this group' });
-        return
+        res
+          .status(409)
+          .json({ error: 'You are already a member of this group' });
+        return;
       }
 
       let member;
       if (joinInput.type === 'claim') {
         // Claim existing virtual user
-        member = group.members.find(member => member.id === joinInput.memberId && !member.userId)
+        member = group.members.find(
+          (member) => member.id === joinInput.memberId && !member.userId
+        );
         if (!member) {
           res.status(403).json({ error: 'User not found or not virtual' });
           return;
@@ -117,8 +121,8 @@ router.post(
         member = await prisma.groupMember.update({
           where: { id: member.id },
           data: {
-            userId: user.userId
-          }
+            userId: user.userId,
+          },
         });
       } else if (joinInput.type === 'new') {
         // Create new member
@@ -131,7 +135,7 @@ router.post(
           },
         });
       } else {
-        assertUnreachable(joinInput)
+        assertUnreachable(joinInput);
       }
 
       res.status(201).json({
@@ -192,7 +196,7 @@ router.post(
  */
 router.get('/', async (req: Request, res: Response, next) => {
   try {
-    const user = req.user! // checked in auth
+    const user = req.user!; // checked in auth
 
     const groups = await prisma.group.findMany({
       where: {
@@ -223,16 +227,16 @@ router.get(
   validateParams(groupIdParamSchema),
   async (req: Request, res: Response, next) => {
     try {
-      const user = req.user! // checked in auth
+      const user = req.user!; // checked in auth
 
       const { groupId } = req.params;
 
       const group = await prisma.group.findFirst({
         where: {
           id: groupId,
-          members: { some: { userId: user.userId } }
+          members: { some: { userId: user.userId } },
         },
-        ...groupWithMembersAndExpenseCount
+        ...groupWithMembersAndExpenseCount,
       });
       if (!group) {
         res.status(404).json({ error: 'Group not found' });
@@ -255,7 +259,7 @@ router.delete(
   validateParams(groupIdParamSchema),
   async (req: Request, res: Response, next) => {
     try {
-      const user = req.user!
+      const user = req.user!;
       const { groupId } = req.params;
 
       // Find group and check ownership
@@ -276,7 +280,9 @@ router.delete(
       );
 
       if (!ownerMember) {
-        res.status(403).json({ error: 'Only the group owner can delete the group' });
+        res
+          .status(403)
+          .json({ error: 'Only the group owner can delete the group' });
         return;
       }
 

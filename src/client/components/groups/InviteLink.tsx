@@ -47,9 +47,9 @@ export function InviteLink({ inviteCode }: InviteLinkProps) {
 
       <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded">
         <p className="text-xs text-blue-800">
-          <strong>Note:</strong> Anyone with this link can join the group. If there are virtual
-          members (people without accounts), the first person to join will claim the first
-          available virtual member slot.
+          <strong>Note:</strong> Anyone with this link can join the group. If
+          there are virtual members (people without accounts), the first person
+          to join will claim the first available virtual member slot.
         </p>
       </div>
     </div>
