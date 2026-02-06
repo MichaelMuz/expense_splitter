@@ -31,3 +31,6 @@ Pain points with current stack and possible alternatives to explore.
 ## Non-Committal Notes
 
 Just tracking frustrations for future reference. Current stack works fine for MVP. Consider trying on next project
+
+
+Should remove vite, bun website says it replaces vite!
