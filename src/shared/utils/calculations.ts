@@ -128,6 +128,21 @@ export function calculateNetBalances(
   }>
 ): Map<string, Map<string, number>> {
   const owedToOwerToAmount = new Map<string, Map<string, number>>();
+
+  const addToMapUnlessZero = (payerId: string, owerId: string, toAdd: number) => {
+    let owerToAmount = owedToOwerToAmount.get(payerId);
+    if (!owerToAmount) {
+      owerToAmount = new Map();
+      owedToOwerToAmount.set(payerId, owerToAmount);
+    }
+    const amount = (owerToAmount.get(owerId) || 0) + toAdd;
+    if (amount === 0) {
+      owerToAmount.delete(owerId)
+    } else {
+      owerToAmount.set(owerId, amount);
+    }
+  }
+
   // Process each expense
   expenses.forEach(({ expense, payers, owers }) => {
     const pToPaid = calculatePayerAmounts(expense, payers);
@@ -137,48 +152,30 @@ export function calculateNetBalances(
     new Set(pToPaid.keys()).intersection(new Set(pToOwes)).forEach(mId => {
       const paid = pToPaid.get(mId) || 0;
       const owes = pToOwes.get(mId) || 0;
-      const maxExch = Math.max(paid, owes);
-
-      const rem = (map: Map<string, number>, origAmount: number) => {
-        const newVal = origAmount - maxExch;
-        if (newVal == 0) {
-          map.delete(mId)
-        } else {
-          map.set(mId, newVal)
-        }
-      }
-      rem(pToPaid, paid);
-      rem(pToOwes, owes);
+      const maxExch = Math.min(paid, owes);
+      pToPaid.set(mId, paid - maxExch)
+      pToOwes.set(mId, owes - maxExch)
     });
 
     // If we sort the list of payers by amount paid desc and owers by amount owed desc then we can two pointer
-    const paidIter = Array.from(pToPaid.entries()).sort().reverse().values();
-    const owesIter = Array.from(pToOwes.entries()).sort().reverse().values();
+    const [paidIter, owesIter] = [pToPaid, pToOwes].map(p => Array.from(p.entries()).sort().reverse().values());
 
-    let paidPair = paidIter.next();
-    let owesPair = owesIter.next();
+    const moveIter = (iter?: ArrayIterator<[string, number]>) => iter?.next().value ?? [undefined, undefined];
+    let [payerId, amountPaid] = moveIter(paidIter);
+    let [owerId, amountOwed] = moveIter(owesIter);
 
-    let [payerId, amountPaid] = paidPair.value ?? [undefined, undefined];
-    let [owerId, amountOwed] = owesPair.value ?? [undefined, undefined];
 
     while (payerId && owerId && amountPaid && amountOwed) {
-      const maxExch = Math.max(amountPaid, amountOwed);
+      const maxExch = Math.min(amountPaid, amountOwed);
       amountOwed -= maxExch;
       amountPaid -= maxExch;
-
-      let owerToAmount = owedToOwerToAmount.get(payerId);
-      if (!owerToAmount) {
-        owerToAmount = new Map();
-        owedToOwerToAmount.set(payerId, owerToAmount);
-      }
-      let amount = owerToAmount.get(owerId) || 0;
-      owerToAmount.set(owerId, amount + maxExch);
+      addToMapUnlessZero(payerId, owerId, maxExch);
 
       if (amountPaid == 0) {
-        [payerId, amountPaid] = paidIter.next().value ?? [undefined, undefined];
+        [payerId, amountPaid] = moveIter(paidIter);
       }
       if (amountOwed == 0) {
-        [owerId, amountOwed] = owesIter.next().value ?? [undefined, undefined];
+        [owerId, amountOwed] = moveIter(owesIter);
       }
     }
     assert(!payerId && !owerId && !amountPaid && !amountOwed, "Expected all to balance out")
@@ -186,19 +183,7 @@ export function calculateNetBalances(
 
   // Apply settlements (reduce debts)
   settlements.forEach(settlement => {
-    let owerToAmount = owedToOwerToAmount.get(settlement.toGroupMemberId);
-    if (!owerToAmount) {
-      owerToAmount = new Map();
-      owedToOwerToAmount.set(settlement.toGroupMemberId, owerToAmount);
-    }
-    const amount = owerToAmount.get(settlement.fromGroupMemberId) || 0;
-    const newAmount = amount - settlement.amount;
-    if (newAmount === 0) {
-      owerToAmount.delete(settlement.fromGroupMemberId)
-    }
-    else {
-      owerToAmount.set(settlement.fromGroupMemberId, newAmount);
-    }
+    addToMapUnlessZero(settlement.toGroupMemberId, settlement.fromGroupMemberId, -settlement.amount);
   });
 
   return owedToOwerToAmount;
