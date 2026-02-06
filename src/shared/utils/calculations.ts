@@ -158,7 +158,7 @@ export function calculateNetBalances(
     });
 
     // If we sort the list of payers by amount paid desc and owers by amount owed desc then we can two pointer
-    const [paidIter, owesIter] = [pToPaid, pToOwes].map(p => Array.from(p.entries()).sort().reverse().values());
+    const [paidIter, owesIter] = [pToPaid, pToOwes].map(p => Array.from(p.entries()).sort((a, b) => b[1] - a[1]).values());
 
     const moveIter = (iter?: ArrayIterator<[string, number]>) => iter?.next().value ?? [undefined, undefined];
     let [payerId, amountPaid] = moveIter(paidIter);
