@@ -3,7 +3,7 @@
  * All amounts are in cents (integers) for precision.
  */
 
-import type { SplitMethod, TaxTipType } from '@prisma/client';
+import type { TaxTipType } from '@prisma/client';
 import type { ExpenseData, PayerInput, OwerInput } from '../schemas/expense';
 import { assertUnreachable } from './type-helpers';
 import assert from 'assert';
@@ -193,6 +193,7 @@ export function calculateNetBalances(
  * Get simplified balance summary per member
  * @param netBalances - Map of owedMemberId to Map of owerMemberId to amount
  * @returns Map of memberId to their net balance (positive = owed to them, negative = they owe)
+ * TODO: Not used right now. Can prob just have this take the same input as calculateNetBalances function otherwise this input is akward
  */
 export function getMemberBalances(
   netBalances: Map<string, Map<string, number>>
