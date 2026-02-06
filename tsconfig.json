@@ -29,6 +29,8 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedIndexedAccess": true,
     "noImplicitOverride": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
 
     // Some stricter flags (disabled by default)
     "noUnusedLocals": false,

@@ -119,8 +119,8 @@ function fixedSumsCorrectly(participantType: 'payers' | 'owers') {
 }
 
 function applyExpenseRefinements<
-  T extends z.ZodType<Partial<z.infer<typeof expenseBaseSchema>>>,
->(schema: T) {
+  Io extends z.infer<typeof expenseBaseSchema> | Partial<z.infer<typeof expenseBaseSchema>>,
+>(schema: z.ZodType<Io, z.ZodTypeDef, Io>) {
   return schema
     .refine(...bothTaxTipOrNeither('Tax', 'taxAmount', 'taxType'))
     .refine(...bothTaxTipOrNeither('Tip', 'tipAmount', 'tipType'))
