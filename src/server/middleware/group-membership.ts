@@ -3,6 +3,7 @@ import { prisma } from '../lib/prisma';
 import type { GroupMember } from '@prisma/client';
 
 declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Express {
     interface Request {
       groupMembership?: GroupMember;

@@ -7,6 +7,7 @@ import { verifyToken } from '../lib/jwt';
 
 // Extend Express Request type to include user
 declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Express {
     interface Request {
       user?: {
@@ -41,7 +42,7 @@ export function authenticateToken(
       email: payload.email,
     };
     next();
-  } catch (error) {
+  } catch {
     res.status(403).json({ error: 'Invalid or expired token' });
   }
 }
@@ -65,7 +66,7 @@ export function optionalAuth(
         userId: payload.userId,
         email: payload.email,
       };
-    } catch (error) {
+    } catch {
       // Token invalid but we don't fail - just proceed without user
     }
   }
