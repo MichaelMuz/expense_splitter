@@ -6,6 +6,7 @@
 import type { SplitMethod, TaxTipType } from '@prisma/client';
 import type { ExpenseData, PayerInput, OwerInput } from '../schemas/expense';
 import { assertUnreachable } from './type-helpers';
+import assert from 'assert';
 
 /**
  * Calculate the total expense amount including tax and tip
@@ -111,7 +112,7 @@ export function calculateOwerAmounts(
  * Calculate net balances for a group after all expenses and settlements
  * @param expenses - Array of expenses with payer and ower data
  * @param settlements - Array of settlements
- * @returns Map of "fromMemberId->toMemberId" to net amount owed in cents
+ * @returns Map of owedMemberId to Map of owerMemberId to net amount owed in cents
  * TODO: I should make a an explicit money type that is in cents
  */
 export function calculateNetBalances(
@@ -125,109 +126,102 @@ export function calculateNetBalances(
     toGroupMemberId: string;
     amount: number;
   }>
-): Map<string, number> {
-  // Track debts: Map of "debtorId->creditorId" to amount
-  const debts = new Map<string, number>();
-
+): Map<string, Map<string, number>> {
+  const owedToOwerToAmount = new Map<string, Map<string, number>>();
   // Process each expense
   expenses.forEach(({ expense, payers, owers }) => {
-    const payerAmounts = calculatePayerAmounts(expense, payers);
-    const owerAmounts = calculateOwerAmounts(expense, owers);
+    const pToPaid = calculatePayerAmounts(expense, payers);
+    const pToOwes = calculateOwerAmounts(expense, owers);
 
-    // Calculate total paid and total owed
-    const totalPaid = Array.from(payerAmounts.values()).reduce((a, b) => a + b, 0);
-    const totalOwed = Array.from(owerAmounts.values()).reduce((a, b) => a + b, 0);
+    // Simplify members that both paid and partook
+    new Set(pToPaid.keys()).intersection(new Set(pToOwes)).forEach(mId => {
+      const paid = pToPaid.get(mId) || 0;
+      const owes = pToOwes.get(mId) || 0;
+      const maxExch = Math.max(paid, owes);
 
-    // For each ower, distribute their debt to payers proportionally
-    owerAmounts.forEach((owedAmount, owerId) => {
-      payerAmounts.forEach((paidAmount, payerId) => {
-        if (owerId === payerId) {
-          // If same person paid and owes, net it out
-          const netAmount = owedAmount - paidAmount;
-          if (netAmount > 0) {
-            // They owe more than they paid
-            // Distribute to other payers
-            payerAmounts.forEach((otherPaidAmount, otherPayerId) => {
-              if (otherPayerId !== owerId && totalPaid > 0) {
-                const proportion = otherPaidAmount / totalPaid;
-                const debtAmount = Math.round(netAmount * proportion);
-                const key = `${owerId}->${otherPayerId}`;
-                debts.set(key, (debts.get(key) || 0) + debtAmount);
-              }
-            });
-          }
+      const rem = (map: Map<string, number>, origAmount: number) => {
+        const newVal = origAmount - maxExch;
+        if (newVal == 0) {
+          map.delete(mId)
         } else {
-          // Different people - ower owes payer
-          const proportion = paidAmount / totalPaid;
-          const debtAmount = Math.round(owedAmount * proportion);
-          const key = `${owerId}->${payerId}`;
-          debts.set(key, (debts.get(key) || 0) + debtAmount);
+          map.set(mId, newVal)
         }
-      });
+      }
+      rem(pToPaid, paid);
+      rem(pToOwes, owes);
     });
+
+    // If we sort the list of payers by amount paid desc and owers by amount owed desc then we can two pointer
+    const paidIter = Array.from(pToPaid.entries()).sort().reverse().values();
+    const owesIter = Array.from(pToOwes.entries()).sort().reverse().values();
+
+    let paidPair = paidIter.next();
+    let owesPair = owesIter.next();
+
+    let [payerId, amountPaid] = paidPair.value ?? [undefined, undefined];
+    let [owerId, amountOwed] = owesPair.value ?? [undefined, undefined];
+
+    while (payerId && owerId && amountPaid && amountOwed) {
+      const maxExch = Math.max(amountPaid, amountOwed);
+      amountOwed -= maxExch;
+      amountPaid -= maxExch;
+
+      let owerToAmount = owedToOwerToAmount.get(payerId);
+      if (!owerToAmount) {
+        owerToAmount = new Map();
+        owedToOwerToAmount.set(payerId, owerToAmount);
+      }
+      let amount = owerToAmount.get(owerId) || 0;
+      owerToAmount.set(owerId, amount + maxExch);
+
+      if (amountPaid == 0) {
+        [payerId, amountPaid] = paidIter.next().value ?? [undefined, undefined];
+      }
+      if (amountOwed == 0) {
+        [owerId, amountOwed] = owesIter.next().value ?? [undefined, undefined];
+      }
+    }
+    assert(!payerId && !owerId && !amountPaid && !amountOwed, "Expected all to balance out")
   });
 
   // Apply settlements (reduce debts)
-  settlements.forEach((settlement) => {
-    const key = `${settlement.fromGroupMemberId}->${settlement.toGroupMemberId}`;
-    debts.set(key, (debts.get(key) || 0) - settlement.amount);
-  });
-
-  // Net off mutual debts (A owes B, B owes A)
-  const finalDebts = new Map<string, number>();
-  const processed = new Set<string>();
-
-  debts.forEach((amount, key) => {
-    if (processed.has(key)) return;
-
-    const [debtor, creditor] = key.split('->');
-    const reverseKey = `${creditor}->${debtor}`;
-    const reverseAmount = debts.get(reverseKey) || 0;
-
-    processed.add(key);
-    processed.add(reverseKey);
-
-    const netAmount = amount - reverseAmount;
-    if (netAmount > 0) {
-      finalDebts.set(key, netAmount);
-    } else if (netAmount < 0) {
-      finalDebts.set(reverseKey, -netAmount);
+  settlements.forEach(settlement => {
+    let owerToAmount = owedToOwerToAmount.get(settlement.toGroupMemberId);
+    if (!owerToAmount) {
+      owerToAmount = new Map();
+      owedToOwerToAmount.set(settlement.toGroupMemberId, owerToAmount);
     }
-    // If netAmount === 0, debts cancel out completely
-  });
-
-  // Remove zero or negative balances
-  finalDebts.forEach((amount, key) => {
-    if (amount <= 0) {
-      finalDebts.delete(key);
+    const amount = owerToAmount.get(settlement.fromGroupMemberId) || 0;
+    const newAmount = amount - settlement.amount;
+    if (newAmount === 0) {
+      owerToAmount.delete(settlement.fromGroupMemberId)
+    }
+    else {
+      owerToAmount.set(settlement.fromGroupMemberId, newAmount);
     }
   });
 
-  return finalDebts;
+  return owedToOwerToAmount;
 }
 
 /**
  * Get simplified balance summary per member
- * @param netBalances - Map of "fromId->toId" to amount
+ * @param netBalances - Map of owedMemberId to Map of owerMemberId to amount
  * @returns Map of memberId to their net balance (positive = owed to them, negative = they owe)
  */
 export function getMemberBalances(
-  netBalances: Map<string, number>
+  netBalances: Map<string, Map<string, number>>
 ): Map<string, number> {
   const balances = new Map<string, number>();
 
-  netBalances.forEach((amount, key) => {
-    const parts = key.split('->');
-    if (parts.length !== 2 || !parts[0] || !parts[1]) return;
+  netBalances.forEach((owerToAmount, owedId) => {
+    owerToAmount.forEach((amount, owerId) => {
+      // Ower owes money (negative balance)
+      balances.set(owerId, (balances.get(owerId) || 0) - amount);
 
-    const debtor = parts[0];
-    const creditor = parts[1];
-
-    // Debtor owes money (negative balance)
-    balances.set(debtor, (balances.get(debtor) || 0) - amount);
-
-    // Creditor is owed money (positive balance)
-    balances.set(creditor, (balances.get(creditor) || 0) + amount);
+      // Owed is owed money (positive balance)
+      balances.set(owedId, (balances.get(owedId) || 0) + amount);
+    });
   });
 
   return balances;
