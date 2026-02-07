@@ -60,7 +60,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }, [data]);
 
-  // Login mutation
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginInput) => {
       const response = await api.post<AuthResponse>('/auth/login', credentials);
@@ -73,7 +72,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
     },
   });
 
-  // Signup mutation
   const signupMutation = useMutation({
     mutationFn: async (credentials: SignupInput) => {
       const response = await api.post<AuthResponse>(
