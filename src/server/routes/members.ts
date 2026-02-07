@@ -15,6 +15,10 @@ import {
   type CreateMemberInput,
   type UpdateMemberInput,
 } from '../../shared/schemas/group';
+import {
+  type MemberResponse,
+  type MembersResponse,
+} from '../../shared/schemas/member';
 import { checkGroupMembership } from '../middleware/group-membership';
 
 const router = Router();
@@ -53,7 +57,8 @@ router.get(
         },
       });
 
-      res.json({ members });
+      const responseData: MembersResponse = { members };
+      res.json(responseData);
     } catch (error) {
       next(error);
     }
@@ -85,7 +90,8 @@ router.post(
         },
       });
 
-      res.status(201).json({ member });
+      const responseData: MemberResponse = { member };
+      res.status(201).json(responseData);
     } catch (error) {
       next(error);
     }
@@ -146,7 +152,9 @@ router.patch(
         res.status(404).json({ error: 'Member not found' });
         return;
       }
-      res.json({ member: updatedMember });
+
+      const responseData: MemberResponse = { member: updatedMember };
+      res.json(responseData);
     } catch (error) {
       next(error);
     }
