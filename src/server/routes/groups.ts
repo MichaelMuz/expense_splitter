@@ -14,6 +14,10 @@ import {
   type CreateGroupInput,
   inviteCodeParamSchema,
   joinInviteSchema,
+  type GroupResponse,
+  type GroupsResponse,
+  type CreateGroupResponse,
+  type JoinGroupResponse,
 } from '../../shared/schemas/group';
 import { assertUnreachable } from '@/shared/utils/type-helpers';
 
@@ -59,7 +63,8 @@ router.get(
         return;
       }
 
-      res.json({ group });
+      const responseData: GroupResponse = { group };
+      res.json(responseData);
     } catch (error) {
       next(error);
     }
@@ -138,7 +143,7 @@ router.post(
         assertUnreachable(joinInput);
       }
 
-      res.status(201).json({
+      const responseData: JoinGroupResponse = {
         group: {
           id: group.id,
           name: group.name,
@@ -146,7 +151,8 @@ router.post(
           createdAt: group.createdAt,
         },
         member,
-      });
+      };
+      res.status(201).json(responseData);
     } catch (error) {
       next(error);
     }
@@ -183,7 +189,8 @@ router.post(
         },
       });
 
-      res.status(201).json({ group });
+      const responseData: CreateGroupResponse = { group };
+      res.status(201).json(responseData);
     } catch (error) {
       next(error);
     }
@@ -212,7 +219,8 @@ router.get('/', async (req: Request, res: Response, next) => {
       },
     });
 
-    res.json({ groups });
+    const responseData: GroupsResponse = { groups };
+    res.json(responseData);
   } catch (error) {
     next(error);
   }
@@ -243,7 +251,8 @@ router.get(
         return;
       }
 
-      res.json({ group });
+      const responseData: GroupResponse = { group };
+      res.json(responseData);
     } catch (error) {
       next(error);
     }
