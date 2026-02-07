@@ -11,6 +11,8 @@ import {
   createSettlementSchema,
   settlementParamsSchema,
   type CreateSettlementInput,
+  type SettlementResponse,
+  type SettlementsResponse,
 } from '../../shared/schemas/settlement';
 import { checkGroupMembership } from '../middleware/group-membership';
 import { groupIdParamSchema } from '@/shared/schemas/group';
@@ -75,7 +77,8 @@ router.post(
         },
       });
 
-      res.status(201).json({ settlement });
+      const responseData: SettlementResponse = { settlement };
+      res.status(201).json(responseData);
     } catch (error) {
       next(error);
     }
@@ -133,7 +136,8 @@ router.get(
         recordedBy: s.recordedBy,
       }));
 
-      res.json({ settlements: formattedSettlements });
+      const responseData: SettlementsResponse = { settlements: formattedSettlements };
+      res.json(responseData);
     } catch (error) {
       next(error);
     }
