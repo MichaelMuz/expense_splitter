@@ -37,12 +37,3 @@ export function getToken(): string | null {
 export function removeToken(): void {
   localStorage.removeItem(TOKEN_KEY);
 }
-
-/**
- * Check if user is authenticated (has token)
- * TODO: Delete this function - it's unused. The real isAuthenticated logic
- * is in useAuth hook (isAuthenticated: !!user)
- */
-export function isAuthenticated(): boolean {
-  return getToken() !== null;
-}
