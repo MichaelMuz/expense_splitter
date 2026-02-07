@@ -1,17 +1,13 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, Navigate} from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { useEffect } from 'react';
 import { Button } from '../components/ui/Button';
 
 export default function HomePage() {
   const { isAuthenticated } = useAuth();
-  const navigate = useNavigate();
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      navigate('/groups');
-    }
-  }, [isAuthenticated, navigate]);
+  if (isAuthenticated) {
+    return <Navigate to="/groups" replace />;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
