@@ -157,3 +157,42 @@ export type CreateExpenseInput = z.infer<typeof createExpenseSchema>;
 export type UpdateExpenseInput = z.infer<typeof updateExpenseSchema>;
 export type PayerInput = z.infer<typeof expenseParticipant>;
 export type OwerInput = z.infer<typeof expenseParticipant>;
+
+const groupMemberSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string(),
+  userId: z.string().uuid().nullable(),
+});
+
+const expenseParticipantWithAmount = expenseParticipant.extend({
+  groupMember: groupMemberSchema,
+  calculatedAmount: z.number().int(),
+});
+
+const expenseSchema = z.object({
+  id: z.string().uuid(),
+  groupId: z.string().uuid(),
+  name: z.string(),
+  description: z.string(),
+  baseAmount: z.number().int(),
+  taxAmount: z.number().int().nullable(),
+  taxType: TaxTipTypeEnum.nullable(),
+  tipAmount: z.number().int().nullable(),
+  tipType: TaxTipTypeEnum.nullable(),
+  totalAmount: z.number().int(),
+  createdAt: z.coerce.date(),
+  payers: z.array(expenseParticipantWithAmount),
+  owers: z.array(expenseParticipantWithAmount),
+});
+
+export const expenseResponseSchema = z.object({
+  expense: expenseSchema,
+});
+
+export const expensesResponseSchema = z.object({
+  expenses: z.array(expenseSchema),
+});
+
+export type Expense = z.infer<typeof expenseSchema>;
+export type ExpenseResponse = z.infer<typeof expenseResponseSchema>;
+export type ExpensesResponse = z.infer<typeof expensesResponseSchema>;

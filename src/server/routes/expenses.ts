@@ -19,6 +19,8 @@ import {
   type CreateExpenseInput,
   type UpdateExpenseInput,
   expenseParamsSchema,
+  type ExpenseResponse,
+  type ExpensesResponse,
 } from '../../shared/schemas/expense';
 import {
   calculateTotalExpenseAmount,
@@ -180,7 +182,11 @@ router.get(
       // Format with calculations
       const formattedExpenses = expenses.map(formatExpenseWithCalculations);
 
-      res.json({ expenses: formattedExpenses });
+      const responseData: ExpensesResponse = {
+        expenses: formattedExpenses,
+      };
+
+      res.json(responseData);
     } catch (error) {
       next(error);
     }
@@ -234,7 +240,11 @@ router.post(
       // Format with calculations
       const formattedExpense = formatExpenseWithCalculations(expense);
 
-      res.status(201).json({ expense: formattedExpense });
+      const responseData: ExpenseResponse = {
+        expense: formattedExpense,
+      };
+
+      res.status(201).json(responseData);
     } catch (error) {
       next(error);
     }
@@ -271,7 +281,11 @@ router.get(
       // Format with calculations
       const formattedExpense = formatExpenseWithCalculations(expense);
 
-      res.json({ expense: formattedExpense });
+      const responseData: ExpenseResponse = {
+        expense: formattedExpense,
+      };
+
+      res.json(responseData);
     } catch (error) {
       next(error);
     }
@@ -345,7 +359,11 @@ router.patch(
       // Format with calculations
       const formattedExpense = formatExpenseWithCalculations(expense);
 
-      res.json({ expense: formattedExpense });
+      const responseData: ExpenseResponse = {
+        expense: formattedExpense,
+      };
+
+      res.json(responseData);
     } catch (error) {
       next(error);
     }
