@@ -9,43 +9,31 @@ import { Layout } from '../components/layout/Layout';
 import { Card } from '../components/ui/Card';
 import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
+import { Tooltip } from '../components/ui/Tooltip';
 
 export default function SignupPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
 
-  const { signup } = useAuth();
+  const { signupMutation } = useAuth();
   const navigate = useNavigate();
+
+  const hoverMessage = (() => {
+    if (password !== confirmPassword) {
+      return 'Passwords do not match';
+    } else if (password.length < 8) {
+      return 'Password must be at least 8 characters';
+    } else {
+      return null;
+    }
+  })();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-
-    if (password !== confirmPassword) {
-      setError('Passwords do not match');
-      return;
-    }
-
-    if (password.length < 8) {
-      setError('Password must be at least 8 characters');
-      return;
-    }
-
-    setIsLoading(true);
-
-    try {
-      await signup({ email, password });
-      navigate('/groups');
-    } catch (err: any) {
-      setError(
-        err.response?.data?.message || 'Signup failed. Please try again.'
-      );
-    } finally {
-      setIsLoading(false);
-    }
+    signupMutation.mutate({ email, password }, {
+      onSuccess: () => navigate('/groups'),
+    })
   };
 
   return (
@@ -54,9 +42,9 @@ export default function SignupPage() {
         <Card>
           <h1 className="text-3xl font-bold text-center mb-6">Sign Up</h1>
 
-          {error && (
+          {signupMutation.isError && (
             <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-              {error}
+              {signupMutation.error.message || 'Signup failed'}
             </div>
           )}
 
@@ -88,9 +76,16 @@ export default function SignupPage() {
               required
             />
 
-            <Button type="submit" className="w-full" isLoading={isLoading}>
-              Sign Up
-            </Button>
+            <Tooltip content={hoverMessage || ''}>
+              <Button
+                type="submit"
+                disabled={!!hoverMessage}
+                className="w-full"
+                isLoading={signupMutation.isPending}
+              >
+                Sign Up
+              </Button>
+            </Tooltip>
           </form>
 
           <div className="mt-4 text-center text-sm text-gray-600">

@@ -32,7 +32,7 @@ export default function LoginPage() {
 
           {loginMutation.isError && (
             <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-              {loginMutation.error.message}
+              {loginMutation.error.message || 'Login failed'}
             </div>
           )}
 
