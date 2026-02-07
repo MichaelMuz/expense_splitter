@@ -185,7 +185,6 @@ router.get(
       const responseData: ExpensesResponse = {
         expenses: formattedExpenses,
       };
-
       res.json(responseData);
     } catch (error) {
       next(error);
@@ -243,7 +242,6 @@ router.post(
       const responseData: ExpenseResponse = {
         expense: formattedExpense,
       };
-
       res.status(201).json(responseData);
     } catch (error) {
       next(error);
@@ -284,7 +282,6 @@ router.get(
       const responseData: ExpenseResponse = {
         expense: formattedExpense,
       };
-
       res.json(responseData);
     } catch (error) {
       next(error);
@@ -362,7 +359,6 @@ router.patch(
       const responseData: ExpenseResponse = {
         expense: formattedExpense,
       };
-
       res.json(responseData);
     } catch (error) {
       next(error);
