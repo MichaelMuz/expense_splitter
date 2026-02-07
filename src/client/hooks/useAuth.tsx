@@ -20,6 +20,10 @@ import type {
   User,
   LoginResponse as AuthResponse,
 } from '@/shared/schemas/auth';
+import {
+  loginResponseSchema,
+  meResponseSchema,
+} from '@/shared/schemas/auth';
 
 
 
@@ -50,8 +54,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
       if (!token) {
         return null;
       }
-      const response = await api.get<{ user: User }>('/auth/me');
-      return response.data.user;
+      const response = await api.get('/auth/me');
+      const validated = meResponseSchema.parse(response.data);
+      return validated.user;
     },
     retry: false,
   });
@@ -64,16 +69,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Hit login endpoint and update the state cache
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginInput) => {
-      const response = await api.post<AuthResponse>('/auth/login', credentials);
-      return response.data;
+      const response = await api.post('/auth/login', credentials);
+      return loginResponseSchema.parse(response.data);
     },
     onSuccess,
   });
   // Hit signup endpoint and update the state cache
   const signupMutation = useMutation({
     mutationFn: async (credentials: SignupInput) => {
-      const response = await api.post<AuthResponse>('/auth/signup', credentials);
-      return response.data;
+      const response = await api.post('/auth/signup', credentials);
+      const validated = loginResponseSchema.parse(response.data);
+      return validated;
     },
     onSuccess,
   });

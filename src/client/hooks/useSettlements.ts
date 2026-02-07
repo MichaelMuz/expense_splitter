@@ -4,23 +4,14 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { CreateSettlementInput } from '../../shared/schemas/settlement';
+import {
+  settlementResponseSchema,
+  settlementsResponseSchema,
+} from '../../shared/schemas/settlement';
 
-// API response types
-export interface Settlement {
-  id: string;
-  groupId: string;
-  from: {
-    id: string;
-    name: string;
-  };
-  to: {
-    id: string;
-    name: string;
-  };
-  amount: number; // in cents
-  paidAt: string;
-  recordedBy: string;
-}
+// Re-export the Settlement type from settlementsResponseSchema
+type SettlementsArray = ReturnType<typeof settlementsResponseSchema.parse>['settlements'];
+export type Settlement = SettlementsArray[number];
 
 const API_BASE_URL = '/api';
 
@@ -48,13 +39,14 @@ async function fetchSettlements(groupId: string): Promise<Settlement[]> {
   }
 
   const data = await response.json();
-  return data.settlements;
+  const validated = settlementsResponseSchema.parse(data);
+  return validated.settlements;
 }
 
 async function createSettlement(
   groupId: string,
   input: CreateSettlementInput
-): Promise<Settlement> {
+): Promise<ReturnType<typeof settlementResponseSchema.parse>['settlement']> {
   const token = getAuthToken();
   const response = await fetch(
     `${API_BASE_URL}/groups/${groupId}/settlements`,
@@ -74,7 +66,8 @@ async function createSettlement(
   }
 
   const data = await response.json();
-  return data.settlement;
+  const validated = settlementResponseSchema.parse(data);
+  return validated.settlement;
 }
 
 async function deleteSettlement(

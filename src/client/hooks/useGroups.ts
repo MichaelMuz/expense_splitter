@@ -5,47 +5,13 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../lib/api';
 import type { CreateGroupInput } from '@/shared/schemas/group';
-
-interface GroupMember {
-  id: string;
-  name: string;
-  role: string;
-  userId: string | null;
-  joinedAt: string;
-}
-
-interface Group {
-  id: string;
-  name: string;
-  inviteCode: string;
-  createdAt: string;
-  members: GroupMember[];
-  _count?: {
-    expenses: number;
-  };
-}
-
-interface GroupsResponse {
-  groups: Group[];
-}
-
-interface GroupResponse {
-  group: Group;
-}
-
-interface CreateGroupResponse {
-  group: Group;
-}
-
-interface JoinGroupResponse {
-  group: {
-    id: string;
-    name: string;
-    inviteCode: string;
-    createdAt: string;
-  };
-  member: GroupMember;
-}
+import {
+  groupResponseSchema,
+  groupsResponseSchema,
+  createGroupResponseSchema,
+  joinGroupResponseSchema,
+  type Group,
+} from '@/shared/schemas/group';
 
 /**
  * Fetch all groups the user is a member of
@@ -54,8 +20,9 @@ export function useGroups() {
   return useQuery({
     queryKey: ['groups'],
     queryFn: async () => {
-      const response = await api.get<GroupsResponse>('/groups');
-      return response.data.groups;
+      const response = await api.get('/groups');
+      const validated = groupsResponseSchema.parse(response.data);
+      return validated.groups;
     },
     refetchOnMount: 'always',
   });
@@ -68,8 +35,9 @@ export function useGroup(groupId: string) {
   return useQuery({
     queryKey: ['groups', groupId],
     queryFn: async () => {
-      const response = await api.get<GroupResponse>(`/groups/${groupId}`);
-      return response.data.group;
+      const response = await api.get(`/groups/${groupId}`);
+      const validated = groupResponseSchema.parse(response.data);
+      return validated.group;
     },
     enabled: !!groupId,
     refetchOnMount: 'always',
@@ -84,8 +52,9 @@ export function useCreateGroup() {
 
   return useMutation({
     mutationFn: async (data: CreateGroupInput) => {
-      const response = await api.post<CreateGroupResponse>('/groups', data);
-      return response.data.group;
+      const response = await api.post('/groups', data);
+      const validated = createGroupResponseSchema.parse(response.data);
+      return validated.group;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['groups'] });
@@ -101,10 +70,9 @@ export function useJoinGroup() {
 
   return useMutation({
     mutationFn: async (inviteCode: string) => {
-      const response = await api.post<JoinGroupResponse>(
-        `/groups/join/${inviteCode}`
-      );
-      return response.data;
+      const response = await api.post(`/groups/join/${inviteCode}`);
+      const validated = joinGroupResponseSchema.parse(response.data);
+      return validated;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['groups'] });

@@ -7,47 +7,11 @@ import type {
   CreateExpenseInput,
   UpdateExpenseInput,
 } from '../../shared/schemas/expense';
-
-// API response types
-export interface ExpensePayer {
-  groupMemberId: string;
-  groupMember: {
-    id: string;
-    name: string;
-    userId: string | null;
-  };
-  splitMethod: 'EVEN' | 'FIXED' | 'PERCENTAGE';
-  splitValue: number | null;
-  calculatedAmount: number;
-}
-
-export interface ExpenseOwer {
-  groupMemberId: string;
-  groupMember: {
-    id: string;
-    name: string;
-    userId: string | null;
-  };
-  splitMethod: 'EVEN' | 'FIXED' | 'PERCENTAGE';
-  splitValue: number | null;
-  calculatedAmount: number;
-}
-
-export interface Expense {
-  id: string;
-  groupId: string;
-  name: string;
-  description: string;
-  baseAmount: number;
-  taxAmount: number | null;
-  taxType: 'FIXED' | 'PERCENTAGE' | null;
-  tipAmount: number | null;
-  tipType: 'FIXED' | 'PERCENTAGE' | null;
-  totalAmount: number;
-  createdAt: string;
-  payers: ExpensePayer[];
-  owers: ExpenseOwer[];
-}
+import {
+  expenseResponseSchema,
+  expensesResponseSchema,
+  type Expense,
+} from '../../shared/schemas/expense';
 
 const API_BASE_URL = '/api';
 
@@ -72,7 +36,8 @@ async function fetchExpenses(groupId: string): Promise<Expense[]> {
   }
 
   const data = await response.json();
-  return data.expenses;
+  const validated = expensesResponseSchema.parse(data);
+  return validated.expenses;
 }
 
 async function fetchExpense(
@@ -94,7 +59,8 @@ async function fetchExpense(
   }
 
   const data = await response.json();
-  return data.expense;
+  const validated = expenseResponseSchema.parse(data);
+  return validated.expense;
 }
 
 async function createExpense(
@@ -117,7 +83,8 @@ async function createExpense(
   }
 
   const data = await response.json();
-  return data.expense;
+  const validated = expenseResponseSchema.parse(data);
+  return validated.expense;
 }
 
 async function updateExpense(
@@ -144,7 +111,8 @@ async function updateExpense(
   }
 
   const data = await response.json();
-  return data.expense;
+  const validated = expenseResponseSchema.parse(data);
+  return validated.expense;
 }
 
 async function deleteExpense(
