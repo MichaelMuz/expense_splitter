@@ -67,7 +67,6 @@ router.post(
           createdAt: user.createdAt,
         },
       };
-
       res.status(201).json(responseData);
     } catch (error) {
       next(error);
@@ -118,7 +117,6 @@ router.post(
           createdAt: user.createdAt,
         },
       };
-
       res.json(responseData);
     } catch (error) {
       next(error);
@@ -156,7 +154,6 @@ router.get(
           createdAt: user.createdAt,
         },
       };
-
       res.json(responseData);
     } catch (error) {
       next(error);
