@@ -13,6 +13,8 @@ interface ProtectedRouteProps {
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { isAuthenticated, isLoading } = useAuth();
 
+  // TODO: Extract this loading screen to a shared component
+  // e.g., components/ui/LoadingScreen.tsx for DRY and consistent look/feel
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">

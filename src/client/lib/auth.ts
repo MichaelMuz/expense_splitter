@@ -4,6 +4,8 @@
 
 export const TOKEN_KEY = 'authToken';
 
+// TODO: Move User and AuthResponse interfaces to src/shared/schemas/auth.ts
+// These types should be shared between frontend and backend for type safety
 export interface User {
   id: string;
   email: string;
@@ -38,6 +40,8 @@ export function removeToken(): void {
 
 /**
  * Check if user is authenticated (has token)
+ * TODO: Delete this function - it's unused. The real isAuthenticated logic
+ * is in useAuth hook (isAuthenticated: !!user)
  */
 export function isAuthenticated(): boolean {
   return getToken() !== null;
