@@ -13,10 +13,13 @@ import {
   setToken,
   getToken,
   removeToken,
-  type User,
-  type AuthResponse,
 } from '../lib/auth';
-import type { LoginInput, SignupInput } from '@/shared/schemas/auth';
+import type {
+  LoginInput,
+  SignupInput,
+  User,
+  LoginResponse as AuthResponse,
+} from '@/shared/schemas/auth';
 
 
 
