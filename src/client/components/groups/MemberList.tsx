@@ -2,19 +2,10 @@
  * MemberList component - displays group members with actions
  */
 
-interface Member {
-  id: string;
-  name: string;
-  role: string;
-  userId: string | null;
-  joinedAt: string;
-  user?: {
-    email?: string;
-  } | null;
-}
+import type { GroupMember } from '@/shared/schemas/group';
 
 interface MemberListProps {
-  members: Member[];
+  members: GroupMember[];
   currentUserId?: string;
   isOwner?: boolean;
   onRemoveMember?: (memberId: string) => void;
@@ -28,8 +19,8 @@ export function MemberList({
   onRemoveMember,
   onUpdateMember,
 }: MemberListProps) {
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
+  const formatDate = (date: Date) => {
+    return date.toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
       year: 'numeric',
@@ -48,8 +39,6 @@ export function MemberList({
       onUpdateMember?.(memberId, newName.trim());
     }
   };
-
-  const currentUserMember = members.find((m) => m.userId === currentUserId);
 
   return (
     <div className="bg-white shadow rounded-lg border border-gray-200">
@@ -90,7 +79,6 @@ export function MemberList({
                   </div>
 
                   <div className="mt-1 text-sm text-gray-500">
-                    {member.user?.email && <p>{member.user.email}</p>}
                     <p>Joined {formatDate(member.joinedAt)}</p>
                   </div>
                 </div>
