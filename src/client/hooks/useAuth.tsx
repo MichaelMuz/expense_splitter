@@ -35,6 +35,9 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
+// TODO: Simplify by removing local state and using query cache as single source of truth
+// Instead of useState + useEffect to sync data, use queryClient.setQueryData() directly
+// in login/signup/logout to update cache, and const { data: user } = useQuery() for reads
 export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
   const queryClient = useQueryClient();
