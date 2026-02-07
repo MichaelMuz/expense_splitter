@@ -10,7 +10,6 @@ import {
   groupsResponseSchema,
   createGroupResponseSchema,
   joinGroupResponseSchema,
-  type Group,
 } from '@/shared/schemas/group';
 
 /**
