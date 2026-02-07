@@ -36,5 +36,10 @@ export const loginResponseSchema = z.object({
   user: userSchema,
 })
 
+export const meResponseSchema = z.object({
+  user: userSchema,
+})
+
 export type User = z.infer<typeof userSchema>;
 export type LoginResponse = z.infer<typeof loginResponseSchema>;
+export type MeResponse = z.infer<typeof meResponseSchema>;

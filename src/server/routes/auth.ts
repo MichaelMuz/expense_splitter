@@ -14,11 +14,12 @@ import {
   loginSchema,
   type SignupInput,
   type LoginInput,
+  type LoginResponse,
+  type MeResponse,
 } from '../../shared/schemas/auth';
 
 const router = Router();
 
-// TODO: Big problem, we are not sharing these return types in a file so the frontend duplicates these. We are losing out on big type safety.
 // TODO: We also want to have the api routes themselves be constants with maybe functions that read from them so the front/backend don't go out of sync
 
 /**
@@ -58,14 +59,16 @@ router.post(
         email: user.email,
       });
 
-      res.status(201).json({
+      const responseData: LoginResponse = {
         token,
         user: {
           id: user.id,
           email: user.email,
           createdAt: user.createdAt,
         },
-      });
+      };
+
+      res.status(201).json(responseData);
     } catch (error) {
       next(error);
     }
@@ -107,14 +110,16 @@ router.post(
         email: user.email,
       });
 
-      res.json({
+      const responseData: LoginResponse = {
         token,
         user: {
           id: user.id,
           email: user.email,
           createdAt: user.createdAt,
         },
-      });
+      };
+
+      res.json(responseData);
     } catch (error) {
       next(error);
     }
@@ -144,13 +149,15 @@ router.get(
         return;
       }
 
-      res.json({
+      const responseData: MeResponse = {
         user: {
           id: user.id,
           email: user.email,
           createdAt: user.createdAt,
         },
-      });
+      };
+
+      res.json(responseData);
     } catch (error) {
       next(error);
     }
