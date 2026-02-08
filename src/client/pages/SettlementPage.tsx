@@ -7,7 +7,6 @@ import { SettlementForm } from '../components/balances/SettlementForm';
 import { useGroup } from '../hooks/useGroups';
 import { useCreateSettlement } from '../hooks/useSettlements';
 import { useAuth } from '../hooks/useAuth';
-import { toDollars } from '@shared/utils/currency';
 import type { CreateSettlementInput } from '@/shared/schemas/settlement';
 
 function SettlementPageUnguarded({ groupId }: { groupId: string }) {
@@ -19,9 +18,6 @@ function SettlementPageUnguarded({ groupId }: { groupId: string }) {
   const fromMemberId = searchParams.get('from');
   const toMemberId = searchParams.get('to');
   const amountCents = searchParams.get('amount');
-  const suggestedAmount = amountCents
-    ? toDollars(parseInt(amountCents))
-    : undefined;
 
   const { data: group, isLoading: groupLoading } = useGroup(groupId);
   const createSettlement = useCreateSettlement(groupId);
@@ -133,5 +129,5 @@ export default function SettlementPage() {
     console.log('Expected a groupId');
     return <Navigate to="/groups" replace />;
   }
-  return <SettlementPageUnguarded groupId={groupId}/>
+  return <SettlementPageUnguarded groupId={groupId} />
 }
