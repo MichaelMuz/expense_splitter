@@ -47,7 +47,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const queryKey = ['auth', 'me']
 
   // Fetch current user if token exists
-  const { data: user = null, isLoading } = useQuery({
+  const { data: user, isLoading } = useQuery({
     queryKey,
     queryFn: async () => {
       const token = getToken();
@@ -59,6 +59,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       return validated.user;
     },
     retry: false,
+    initialData: null,
   });
 
   // Store the user in the query cache on login/signup as source of truth

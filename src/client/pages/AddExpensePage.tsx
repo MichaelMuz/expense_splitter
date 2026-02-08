@@ -2,8 +2,7 @@
  * AddExpensePage - Create or edit an expense
  */
 
-import { useParams, useNavigate } from 'react-router-dom';
-import { useEffect } from 'react';
+import { useParams, useNavigate, Navigate } from 'react-router-dom';
 import { ExpenseForm } from '../components/expenses/ExpenseForm';
 import {
   useExpense,
@@ -17,19 +16,24 @@ export default function AddExpensePage() {
     groupId: string;
     expenseId?: string;
   }>();
-  const navigate = useNavigate();
   const isEditing = !!expenseId;
+  const navigate = useNavigate();
 
-  const { data: group, isLoading: groupLoading } = useGroup(groupId!);
+  if (!groupId) {
+    console.log('Expected a groupId');
+    return <Navigate to='/groups' replace />
+  }
+
+  const { data: group, isLoading: groupLoading } = useGroup(groupId);
   const { data: expense, isLoading: expenseLoading } = useExpense(
-    groupId!,
+    groupId,
     expenseId!,
     {
       enabled: isEditing,
     }
   );
-  const createExpense = useCreateExpense(groupId!);
-  const updateExpense = useUpdateExpense(groupId!, expenseId!);
+  const createExpense = useCreateExpense(groupId);
+  const updateExpense = useUpdateExpense(groupId, expenseId!);
 
   const handleSubmit = async (data: any) => {
     try {
