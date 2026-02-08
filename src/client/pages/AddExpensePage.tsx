@@ -25,12 +25,12 @@ function LoadingScreen() {
 
 type ExpenseInput<E extends Expense | null> = E extends Expense ? UpdateExpenseInput : CreateExpenseInput;
 
-function useExpenseForm<E extends Expense | null>(
-  group: Group,
-  groupId: string,
-  mutation: UseMutationResult<Expense, Error, ExpenseInput<E>>,
-  expense: E,
-) {
+function ExpenseFormView<E extends Expense | null>({ group, groupId, mutation, expense }: {
+  group: Group;
+  groupId: string;
+  mutation: UseMutationResult<Expense, Error, ExpenseInput<E>>;
+  expense: E;
+}) {
   const navigate = useNavigate();
 
   const handleSubmit = (data: ExpenseInput<E>) => {
@@ -85,7 +85,7 @@ function useExpenseForm<E extends Expense | null>(
 function CreateExpense({ groupId, group }: { groupId: string; group: Group }) {
   const createExpense = useCreateExpense(groupId);
 
-  return useExpenseForm(group, groupId, createExpense, null);
+  return <ExpenseFormView group={group} groupId={groupId} mutation={createExpense} expense={null} />;
 }
 
 function EditExpense({ groupId, expenseId, group }: { groupId: string; expenseId: string; group: Group }) {
@@ -100,7 +100,7 @@ function EditExpense({ groupId, expenseId, group }: { groupId: string; expenseId
     return <LoadingScreen />;
   }
 
-  return useExpenseForm(group, groupId, updateExpense, expense);
+  return <ExpenseFormView group={group} groupId={groupId} mutation={updateExpense} expense={expense} />;
 }
 
 export default function AddExpensePage() {
