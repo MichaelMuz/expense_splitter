@@ -50,15 +50,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const { data: user, isLoading } = useQuery({
     queryKey,
     queryFn: async () => {
-      const token = getToken();
-      if (!token) {
-        return null;
-      }
       const response = await api.get('/auth/me');
       const validated = meResponseSchema.parse(response.data);
       return validated.user;
     },
     retry: false,
+    enabled: !!getToken(),
     initialData: null,
   });
 
