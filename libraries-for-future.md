@@ -36,6 +36,15 @@ Pain points with current stack and possible alternatives to explore.
 
 - **React Hook Form** + `@hookform/resolvers/zod` - Pass your Zod schema to the form library and it handles validation automatically. Per-field error messages derived from Zod schema definitions. Same schemas the server uses, one source of truth. Replaces hand-written validation logic in form components.
 
+## In Progress
+
+### shadcn/ui
+
+- Replaces hand-written ui/ components (Button, Card, Modal, etc.) with well-designed, accessible, Tailwind-based components
+- Built on Radix UI for accessibility/behavior, styled with Tailwind
+- Generates components into your project (you own the code, can modify)
+- Also has Skeleton loaders for replacing our loading state TODOs
+
 ## Non-Committal Notes
 
 Just tracking frustrations for future reference. Current stack works fine for MVP. Consider trying on next project
