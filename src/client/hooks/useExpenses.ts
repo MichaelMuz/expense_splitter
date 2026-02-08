@@ -156,15 +156,11 @@ export function useExpenses(groupId: string) {
 export function useExpense(
   groupId: string,
   expenseId: string,
-  options?: { enabled?: boolean }
 ) {
   return useQuery({
     queryKey: ['expenses', groupId, expenseId],
     queryFn: () => fetchExpense(groupId, expenseId),
-    enabled:
-      options?.enabled !== undefined
-        ? options.enabled
-        : !!groupId && !!expenseId,
+    enabled: !!groupId && !!expenseId,
     refetchOnMount: true,
   });
 }
