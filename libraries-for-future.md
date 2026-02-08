@@ -32,6 +32,10 @@ Pain points with current stack and possible alternatives to explore.
 - **Drizzle** - Query builder, closer to SQL, `.returning()` works everywhere
 - **Kysely** - Type-safe SQL query builder, very flexible
 
+### Form Handling
+
+- **React Hook Form** + `@hookform/resolvers/zod` - Pass your Zod schema to the form library and it handles validation automatically. Per-field error messages derived from Zod schema definitions. Same schemas the server uses, one source of truth. Replaces hand-written validation logic in form components.
+
 ## Non-Committal Notes
 
 Just tracking frustrations for future reference. Current stack works fine for MVP. Consider trying on next project
