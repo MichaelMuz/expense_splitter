@@ -28,9 +28,6 @@ export default function AddExpensePage() {
   const { data: expense, isLoading: expenseLoading } = useExpense(
     groupId,
     expenseId!,
-    {
-      enabled: isEditing,
-    }
   );
   const createExpense = useCreateExpense(groupId);
   const updateExpense = useUpdateExpense(groupId, expenseId!);
