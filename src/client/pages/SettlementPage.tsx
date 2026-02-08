@@ -2,7 +2,7 @@
  * SettlementPage - Record a settlement/payment between members
  */
 
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams, Navigate } from 'react-router-dom';
 import { SettlementForm } from '../components/balances/SettlementForm';
 import { useGroup } from '../hooks/useGroups';
 import { useCreateSettlement } from '../hooks/useSettlements';
@@ -10,8 +10,7 @@ import { useAuth } from '../hooks/useAuth';
 import { toDollars } from '@shared/utils/currency';
 import type { CreateSettlementInput } from '@/shared/schemas/settlement';
 
-export default function SettlementPage() {
-  const { groupId } = useParams<{ groupId: string }>();
+function SettlementPageUnguarded({ groupId }: { groupId: string }) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
@@ -24,25 +23,23 @@ export default function SettlementPage() {
     ? toDollars(parseInt(amountCents))
     : undefined;
 
-  const { data: group, isLoading: groupLoading } = useGroup(groupId!);
-  const createSettlement = useCreateSettlement(groupId!);
+  const { data: group, isLoading: groupLoading } = useGroup(groupId);
+  const createSettlement = useCreateSettlement(groupId);
 
   // Find current user's group member ID
-  const currentMember = group?.members?.find((m: any) => m.userId === user?.id);
+  const currentMember = group?.members?.find(m => m.userId === user?.id);
 
-  const handleSubmit = async (data: CreateSettlementInput) => {
-    try {
-      await createSettlement.mutateAsync(data);
-      navigate(`/groups/${groupId}`);
-    } catch (error) {
-      console.error('Failed to record settlement:', error);
-    }
+  const handleSubmit = (data: CreateSettlementInput) => {
+    createSettlement.mutate(data, {
+      onSuccess: () => navigate(`/groups/${groupId}`),
+    });
   };
 
   const handleCancel = () => {
     navigate(`/groups/${groupId}`);
   };
 
+  // TODO: we should use shared code for this in the future
   if (groupLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -51,6 +48,7 @@ export default function SettlementPage() {
     );
   }
 
+  // TODO: we should use shared code for this in the future
   if (!group) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
@@ -127,4 +125,13 @@ export default function SettlementPage() {
       </div>
     </div>
   );
+}
+
+export default function SettlementPage() {
+  const { groupId } = useParams<{ groupId: string }>();
+  if (!groupId) {
+    console.log('Expected a groupId');
+    return <Navigate to="/groups" replace />;
+  }
+  return <SettlementPageUnguarded groupId={groupId}/>
 }
