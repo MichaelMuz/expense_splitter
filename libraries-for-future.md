@@ -40,10 +40,10 @@ Pain points with current stack and possible alternatives to explore.
 
 ### shadcn/ui
 
-- Replaces hand-written ui/ components (Button, Card, Modal, etc.) with well-designed, accessible, Tailwind-based components
-- Built on Radix UI for accessibility/behavior, styled with Tailwind
-- Generates components into your project (you own the code, can modify)
-- Also has Skeleton loaders for replacing our loading state TODOs
+- Installed and configured. Components generated: button, card, input, avatar, skeleton, tooltip
+- Old hand-written ui/ components deleted
+- **TODO**: Consuming components (pages, layout, groups, expenses, balances) still import the old components — need to update imports and adapt to shadcn's composable API (e.g., Card → Card + CardHeader + CardContent, Avatar → Avatar + AvatarImage + AvatarFallback)
+- Also need to recreate EmptyState (custom, not a shadcn component)
 
 ## Non-Committal Notes
 
