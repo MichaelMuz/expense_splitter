@@ -11,7 +11,7 @@ import { Button } from '../ui/Button';
 import { EmptyState } from '../ui/EmptyState';
 import { SkeletonCard } from '../ui/Skeleton';
 import { Card } from '../ui/Card';
-import { fadeInUp } from '../../utils/animations';
+import { fadeInUp } from '../../lib/animations';
 
 interface BalanceGraphProps {
   groupId: string;

@@ -9,7 +9,7 @@ import { formatCurrency } from '../../../shared/utils/currency';
 import type { Expense } from '../../hooks/useExpenses';
 import { Avatar } from '../ui/Avatar';
 import { Button } from '../ui/Button';
-import { hoverLift, hoverGlow } from '../../utils/animations';
+import { hoverLift, hoverGlow } from '../../lib/animations';
 
 interface ExpenseCardProps {
   expense: Expense;
