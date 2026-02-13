@@ -5,8 +5,6 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ExpenseList } from '../components/expenses/ExpenseList';
-import { BalanceSummary } from '../components/balances/BalanceSummary';
-import { BalanceGraph } from '../components/balances/BalanceGraph';
 import { MemberList } from '../components/groups/MemberList';
 import { InviteLink } from '../components/groups/InviteLink';
 import { VirtualPersonClaim } from '../components/groups/VirtualPersonClaim';
@@ -53,16 +51,6 @@ export default function GroupDetailPage() {
 
   const handleEditExpense = (expenseId: string) => {
     navigate(`/groups/${groupId}/expenses/${expenseId}/edit`);
-  };
-
-  const handleRecordSettlement = (
-    fromId: string,
-    toId: string,
-    amount: number
-  ) => {
-    navigate(
-      `/groups/${groupId}/settlements/new?from=${fromId}&to=${toId}&amount=${amount}`
-    );
   };
 
   return (
@@ -137,12 +125,8 @@ export default function GroupDetailPage() {
         )}
 
         {activeTab === 'balances' && (
-          <div className="space-y-6">
-            <BalanceSummary groupId={groupId!} />
-            <BalanceGraph
-              groupId={groupId!}
-              onSettle={handleRecordSettlement}
-            />
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center">
+            <p className="text-gray-600">Balances view coming soon</p>
           </div>
         )}
 

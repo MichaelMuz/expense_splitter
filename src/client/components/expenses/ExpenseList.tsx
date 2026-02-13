@@ -2,7 +2,8 @@
  * ExpenseList component - displays a list of expenses
  */
 
-import { ExpenseCard } from './ExpenseCard';
+import { Trash2 } from 'lucide-react';
+import { formatCurrency } from '../../../shared/utils/currency';
 import { useExpenses, useDeleteExpense } from '../../hooks/useExpenses';
 
 interface ExpenseListProps {
@@ -55,14 +56,38 @@ export function ExpenseList({ groupId, onEditExpense }: ExpenseListProps) {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-2">
       {expenses.map((expense) => (
-        <ExpenseCard
+        <div
           key={expense.id}
-          expense={expense}
-          onEdit={onEditExpense ? () => onEditExpense(expense.id) : undefined}
-          onDelete={() => handleDelete(expense.id)}
-        />
+          className="flex items-center justify-between bg-white border border-gray-200 rounded-lg p-4"
+        >
+          <div
+            className="flex-1 cursor-pointer"
+            onClick={() => onEditExpense?.(expense.id)}
+          >
+            <p className="font-medium text-gray-900">{expense.name}</p>
+            <p className="text-sm text-gray-500">
+              {new Date(expense.createdAt).toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+              })}
+              {' · '}
+              Paid by {expense.payers.map((p) => p.groupMember.name).join(', ')}
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="font-mono font-semibold text-gray-900">
+              {formatCurrency(expense.totalAmount)}
+            </span>
+            <button
+              onClick={() => handleDelete(expense.id)}
+              className="text-gray-400 hover:text-red-600"
+            >
+              <Trash2 size={16} />
+            </button>
+          </div>
+        </div>
       ))}
     </div>
   );
