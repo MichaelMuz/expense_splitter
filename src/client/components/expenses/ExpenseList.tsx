@@ -1,5 +1,6 @@
 import { formatCurrency } from '../../../shared/utils/currency';
 import { useExpenses, useDeleteExpense } from '../../hooks/useExpenses';
+import { Loading } from '../layout/Loading';
 
 interface ExpenseListProps {
   groupId: string;
@@ -15,7 +16,7 @@ export function ExpenseList({ groupId }: ExpenseListProps) {
     }
   };
 
-  if (isLoading) return <p>Loading expenses...</p>;
+  if (isLoading) return <Loading name='expenses' />
   if (error) return <p>Failed to load expenses.</p>;
   if (!expenses || expenses.length === 0) return <p>No expenses yet.</p>;
 

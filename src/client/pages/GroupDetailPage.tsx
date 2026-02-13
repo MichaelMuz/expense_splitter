@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ExpenseList } from '../components/expenses/ExpenseList';
 import { useGroup } from '../hooks/useGroups';
 import { Layout } from '../components/layout/Layout';
+import { Loading } from '../components/layout/Loading';
 
 type Tab = 'expenses' | 'balances' | 'members';
 
@@ -12,7 +13,7 @@ export default function GroupDetailPage() {
   const [activeTab, setActiveTab] = useState<Tab>('expenses');
   const { data: group, isLoading, error } = useGroup(groupId!);
 
-  if (isLoading) return <Layout><p>Loading group...</p></Layout>;
+  if (isLoading) return <Loading name='group' />
   if (error || !group) return <Layout><p>Failed to load group.</p></Layout>;
 
   return (

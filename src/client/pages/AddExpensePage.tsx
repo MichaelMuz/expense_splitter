@@ -1,6 +1,7 @@
 import { useParams, useNavigate, Navigate } from 'react-router-dom';
 import { useGroup } from '../hooks/useGroups';
 import { Layout } from '../components/layout/Layout';
+import { Loading } from '../components/layout/Loading';
 
 export default function AddExpensePage() {
   const { groupId } = useParams<{ groupId: string }>();
@@ -10,7 +11,7 @@ export default function AddExpensePage() {
 
   const { data: group, isLoading } = useGroup(groupId);
 
-  if (isLoading) return <Layout><p>Loading...</p></Layout>;
+  if (isLoading) return <Loading name='group' />
   if (!group) return <Layout><p>Group not found.</p></Layout>;
 
   return (
