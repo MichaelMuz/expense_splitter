@@ -233,27 +233,3 @@ export function calculateNetBalances(
 
   return owedToOwerToAmount;
 }
-
-/**
- * Get simplified balance summary per member
- * @param netBalances - Map of owedMemberId to Map of owerMemberId to amount
- * @returns Map of memberId to their net balance (positive = owed to them, negative = they owe)
- * TODO: Not used right now. Can prob just have this take the same input as calculateNetBalances function otherwise this input is akward
- */
-export function getMemberBalances(
-  netBalances: Map<string, Map<string, number>>
-): Map<string, number> {
-  const balances = new Map<string, number>();
-
-  netBalances.forEach((owerToAmount, owedId) => {
-    owerToAmount.forEach((amount, owerId) => {
-      // Ower owes money (negative balance)
-      balances.set(owerId, (balances.get(owerId) || 0) - amount);
-
-      // Owed is owed money (positive balance)
-      balances.set(owedId, (balances.get(owedId) || 0) + amount);
-    });
-  });
-
-  return balances;
-}

@@ -78,19 +78,3 @@ export function useJoinGroup() {
     },
   });
 }
-
-/**
- * Delete a group (owner only)
- */
-export function useDeleteGroup() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (groupId: string) => {
-      await api.delete(`/groups/${groupId}`);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['groups'] });
-    },
-  });
-}

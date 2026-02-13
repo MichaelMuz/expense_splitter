@@ -33,24 +33,3 @@ export function formatCurrency(cents: number): string {
     currency: 'USD',
   }).format(dollars);
 }
-
-/**
- * Parse currency string to cents
- * Handles formats like: "$10.50", "10.50", "$10", "10"
- * @param value - Currency string
- * @returns Amount in cents, or 0 if invalid
- */
-export function parseCurrency(value: string): number {
-  // Remove currency symbols, spaces, and commas
-  const cleaned = value.replace(/[$,\s]/g, '');
-
-  // Parse as float
-  const dollars = parseFloat(cleaned);
-
-  // Return 0 if invalid
-  if (isNaN(dollars)) {
-    return 0;
-  }
-
-  return toCents(dollars);
-}
