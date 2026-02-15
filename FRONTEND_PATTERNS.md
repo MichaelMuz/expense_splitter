@@ -26,7 +26,9 @@ Conventions we follow in the frontend code.
 
 - Derived state: compute during render, don't store in useState
 - Never call hooks conditionally (Rules of Hooks)
-- Prefer structural nesting over explicit attributes when HTML provides the association (e.g. `<label><input></label>` over `htmlFor`/`id` pairs)
+- Prefer structural nesting over explicit attributes when HTML provides the association
+  - `<label>Name: <input ... /></label>` — one element, done
+  - NOT `<div><label htmlFor="name">Name</label><input id="name" ... /></div>` — three elements, two attributes, all unnecessary
 
 ## Validation
 
