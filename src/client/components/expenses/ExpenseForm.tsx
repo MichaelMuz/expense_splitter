@@ -3,7 +3,7 @@ import { useState } from "react";
 import type { Group } from "@/shared/schemas/group";
 import { toCents, toDollars } from "@/shared/utils/currency";
 
-export default function ExpenseForm({ initialData, members, onSubmit }: { initialData?: Expense; members: Group['members']; onSubmit: (data: CreateExpenseInput) => void }) {
+export default function ExpenseForm({ initialData, members, isPending, onSubmit }: { initialData?: Expense; members: Group['members']; isPending: boolean; onSubmit: (data: CreateExpenseInput) => void }) {
     const [name, setName] = useState(initialData?.name || "");
     const [description, setDescription] = useState(initialData?.description || "");
     const [baseAmount, setBaseAmount] = useState(initialData?.baseAmount ? toDollars(initialData?.baseAmount).toString() : "");
@@ -83,7 +83,7 @@ export default function ExpenseForm({ initialData, members, onSubmit }: { initia
                 </label>
             )}
 
-            <button type='submit'>Submit</button>
+            <button type='submit' disabled={isPending}>Submit</button>
         </form>
     );
 }
