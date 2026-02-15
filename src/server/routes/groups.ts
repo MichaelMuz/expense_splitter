@@ -135,7 +135,7 @@ router.post(
           data: {
             groupId: group.id,
             userId: user.userId,
-            name: joinInput.userName,
+            name: joinInput.memberName,
             role: 'member',
           },
         });

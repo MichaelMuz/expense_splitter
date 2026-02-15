@@ -4,7 +4,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../lib/api';
-import type { CreateGroupInput } from '@/shared/schemas/group';
+import type { CreateGroupInput, JoinInviteInput } from '@/shared/schemas/group';
 import {
   groupResponseSchema,
   groupsResponseSchema,
@@ -68,8 +68,8 @@ export function useJoinGroup() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (inviteCode: string) => {
-      const response = await api.post(`/groups/join/${inviteCode}`);
+    mutationFn: async ({inviteCode, joinInput}:{inviteCode: string, joinInput: JoinInviteInput}) => {
+      const response = await api.post(`/groups/join/${inviteCode}`, joinInput);
       const validated = joinGroupResponseSchema.parse(response.data);
       return validated;
     },
