@@ -5,7 +5,7 @@ import { useGroup } from '../hooks/useGroups';
 import { Layout } from '../components/layout/Layout';
 import { Loading } from '../components/layout/Loading';
 
-type Tab = 'expenses' | 'balances' | 'members';
+type Tab = 'expenses' | 'balances' | 'members' | 'settlements';
 
 export default function GroupDetailPage() {
   const { groupId } = useParams<{ groupId: string }>();
@@ -23,6 +23,8 @@ export default function GroupDetailPage() {
       <nav>
         <button onClick={() => setActiveTab('expenses')} disabled={activeTab === 'expenses'}>Expenses</button>
         {' '}
+        <button onClick={() => setActiveTab('settlements')} disabled={activeTab === 'settlements'}>Settlements</button>
+        {' '}
         <button onClick={() => setActiveTab('balances')} disabled={activeTab === 'balances'}>Balances</button>
         {' '}
         <button onClick={() => setActiveTab('members')} disabled={activeTab === 'members'}>Members</button>
@@ -32,6 +34,13 @@ export default function GroupDetailPage() {
         <div>
           <button onClick={() => navigate(`/groups/${groupId}/expenses/new`)}>Add Expense</button>
           <ExpenseList groupId={groupId!} />
+        </div>
+      )}
+
+      {activeTab === 'settlements' && (
+        <div>
+          <button onClick={() => navigate(`/groups/${groupId}/settlements/new`)}>Add Settlement</button>
+          {/* Add a list of settlements like the expenses piece */}
         </div>
       )}
 
