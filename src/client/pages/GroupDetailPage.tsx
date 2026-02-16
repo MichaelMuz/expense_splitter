@@ -5,6 +5,7 @@ import { useGroup } from '../hooks/useGroups';
 import { Layout } from '../components/layout/Layout';
 import { Loading } from '../components/layout/Loading';
 import { SettlementList } from '../components/settlements/SettlementList';
+import { BalancesList } from '../components/balances/BalancesList';
 
 type Tab = 'expenses' | 'balances' | 'members' | 'settlements';
 
@@ -45,7 +46,7 @@ function GroupDetailCore({ groupId }: { groupId: string }) {
       )}
 
       {activeTab === 'balances' &&
-        }
+        <BalancesList groupId={groupId} />}
 
       {activeTab === 'members' && (
         <div>
