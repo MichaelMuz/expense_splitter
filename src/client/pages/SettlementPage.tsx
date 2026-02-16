@@ -1,18 +1,22 @@
-import { useParams, useNavigate, Navigate } from 'react-router-dom';
+import { useParams, useNavigate, Navigate, useSearchParams } from 'react-router-dom';
 import { useGroup } from '../hooks/useGroups';
 import { Layout } from '../components/layout/Layout';
 import { Loading } from '../components/layout/Loading';
 import { useCreateSettlement } from '../hooks/useSettlements';
 import { useState } from 'react';
-import { toCents } from '@/shared/utils/currency';
+import { toCents, toDollars } from '@/shared/utils/currency';
 
 function SettlementPageCore({ groupId }: { groupId: string }) {
   const navigate = useNavigate();
   const { data: group, isLoading } = useGroup(groupId);
   const createSettlement = useCreateSettlement(groupId);
-  const [fromGroupMemberId, setFromGroupMemberId] = useState('');
-  const [toGroupMemberId, setToGroupMemberId] = useState('');
-  const [amount, setAmount] = useState('');
+
+  const [searchParams] = useSearchParams();
+  const initialAmount = searchParams.get("amount")
+
+  const [fromGroupMemberId, setFromGroupMemberId] = useState(searchParams.get("from") || '');
+  const [toGroupMemberId, setToGroupMemberId] = useState(searchParams.get("to") || '');
+  const [amount, setAmount] = useState(initialAmount ? toDollars(parseFloat(initialAmount)).toString() : '');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
