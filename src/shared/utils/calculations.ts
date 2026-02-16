@@ -174,14 +174,32 @@ export function calculateNetBalances(
     const pToPaid = calculatePayerAmounts(expense, expense.payers);
     const pToOwes = calculateOwerAmounts(expense, expense.owers);
 
+    console.log("before simplify")
+    console.log("pToPaid")
+    console.log(JSON.stringify(Object.fromEntries(pToPaid), null, 2))
+    console.log("pToOwes")
+    console.log(JSON.stringify(Object.fromEntries(pToOwes), null, 2))
+
     // Simplify members that both paid and partook
-    new Set(pToPaid.keys()).intersection(new Set(pToOwes)).forEach((mId) => {
+    const intersec = new Set(pToPaid.keys()).intersection(new Set(pToOwes.keys()));
+    console.log("intersec")
+    console.log(JSON.stringify(Array.from(intersec), null, 2))
+    intersec.forEach((mId) => {
       const paid = pToPaid.get(mId) || 0;
       const owes = pToOwes.get(mId) || 0;
       const maxExch = Math.min(paid, owes);
       pToPaid.set(mId, paid - maxExch);
       pToOwes.set(mId, owes - maxExch);
     });
+
+    // Delete any entries where only 0 dollars are paid/owed
+    [pToPaid, pToOwes].forEach(mp => mp.forEach((v, k) => (v == 0) ? mp.delete(k) : undefined));
+
+    console.log("after simplify")
+    console.log("pToPaid")
+    console.log(JSON.stringify(Object.fromEntries(pToPaid), null, 2))
+    console.log("pToOwes")
+    console.log(JSON.stringify(Object.fromEntries(pToOwes), null, 2))
 
     // If we sort the list of payers by amount paid desc and owers by amount owed desc then we can two pointer
     const [paidIter, owesIter] = [pToPaid, pToOwes].map((p) =>
@@ -195,7 +213,7 @@ export function calculateNetBalances(
     let [payerId, amountPaid] = moveIter(paidIter);
     let [owerId, amountOwed] = moveIter(owesIter);
 
-    while (payerId && owerId && amountPaid && amountOwed) {
+    while (payerId != undefined && owerId != undefined && amountPaid != undefined && amountOwed != undefined) {
       const maxExch = Math.min(amountPaid, amountOwed);
       amountOwed -= maxExch;
       amountPaid -= maxExch;
@@ -208,6 +226,12 @@ export function calculateNetBalances(
         [owerId, amountOwed] = moveIter(owesIter);
       }
     }
+
+    console.log("payerId, owerId, amountPaid, amountOwed")
+    console.log(payerId)
+    console.log(owerId)
+    console.log(amountPaid)
+    console.log(amountOwed)
     assert(
       !payerId && !owerId && !amountPaid && !amountOwed,
       'Expected all to balance out'
@@ -222,6 +246,21 @@ export function calculateNetBalances(
       -settlement.amount
     );
   });
+
+  // Delete pairwise owing relationships, Can't have A owe B and B owe A
+  Array.from(owedToOwerToAmount.entries()).forEach(([owedId, owerToAmount]) => (
+    Array.from(owerToAmount.entries()).forEach(([owerId, amount]) => {
+      // if owed also owes in the ower's map then we cancel these out
+      const owedOwesAmount = owedToOwerToAmount.get(owerId)?.get(owedId)
+      if (owedOwesAmount) {
+        const maxExch = Math.min(amount, owedOwesAmount);
+        addToMapUnlessZero(owedId, owerId, -maxExch)
+        addToMapUnlessZero(owerId, owedId, -maxExch)
+      }
+
+
+    })
+  ))
 
   return owedToOwerToAmount;
 }
