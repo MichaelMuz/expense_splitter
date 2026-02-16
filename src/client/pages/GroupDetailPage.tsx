@@ -46,7 +46,7 @@ function GroupDetailCore({ groupId }: { groupId: string }) {
       )}
 
       {activeTab === 'balances' &&
-        <BalancesList groupId={groupId} />}
+        <BalancesList groupId={groupId} members={group.members} />}
 
       {activeTab === 'members' && (
         <div>
