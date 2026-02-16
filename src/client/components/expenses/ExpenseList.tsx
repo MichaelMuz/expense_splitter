@@ -2,11 +2,7 @@ import { formatCurrency } from '../../../shared/utils/currency';
 import { useExpenses, useDeleteExpense } from '../../hooks/useExpenses';
 import { Loading } from '../layout/Loading';
 
-interface ExpenseListProps {
-  groupId: string;
-}
-
-export function ExpenseList({ groupId }: ExpenseListProps) {
+export function ExpenseList({ groupId }: { groupId: string }) {
   const { data: expenses, isLoading, error } = useExpenses(groupId);
   const deleteExpense = useDeleteExpense(groupId);
 
