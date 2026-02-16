@@ -20,14 +20,12 @@ export default function JoinGroupPage() {
       <h1>Join a Group</h1>
       {joinGroup.isError && <p>{joinGroup.error.message}</p>}
       <form onSubmit={handleSubmit}>
-        <div>
-          <label htmlFor="inviteCode">Invite Code</label>
-          <input id="inviteCode" type="text" value={inviteCode} onChange={(e) => setInviteCode(e.target.value)} required />
-        </div>
-        <div>
-          <label htmlFor="memberName">Member Name</label>
-          <input id="memberName" type="text" value={memberName} onChange={(e) => setMemberName(e.target.value)} required />
-        </div>
+        <label>Invite Code
+          <input value={inviteCode} onChange={(e) => setInviteCode(e.target.value)} required />
+        </label>
+        <label>Member Name
+          <input value={memberName} onChange={(e) => setMemberName(e.target.value)} required />
+        </label>
         <button type="submit" disabled={joinGroup.isPending}>
           {joinGroup.isPending ? 'Joining...' : 'Join Group'}
         </button>

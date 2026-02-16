@@ -22,12 +22,14 @@ export default function LoginPage() {
       {loginMutation.isError && <p>{loginMutation.error.message}</p>}
       <form onSubmit={handleSubmit}>
         <div>
-          <label htmlFor="email">Email</label>
-          <input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+          <label>Email
+            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+          </label>
         </div>
         <div>
-          <label htmlFor="password">Password</label>
-          <input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+          <label>Password
+            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+          </label>
         </div>
         <button type="submit" disabled={loginMutation.isPending}>
           {loginMutation.isPending ? 'Logging in...' : 'Login'}

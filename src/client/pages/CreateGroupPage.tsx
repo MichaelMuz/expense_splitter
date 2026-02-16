@@ -19,10 +19,9 @@ export default function CreateGroupPage() {
       <h1>Create New Group</h1>
       {createGroup.isError && <p>{createGroup.error.message}</p>}
       <form onSubmit={handleSubmit}>
-        <div>
-          <label htmlFor="name">Group Name</label>
-          <input id="name" type="text" value={name} onChange={(e) => setName(e.target.value)} required />
-        </div>
+        <label>Group Name
+          <input value={name} onChange={(e) => setName(e.target.value)} required />
+        </label>
         <button type="submit" disabled={createGroup.isPending}>
           {createGroup.isPending ? 'Creating...' : 'Create Group'}
         </button>

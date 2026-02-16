@@ -48,7 +48,6 @@ export default function ExpenseForm({ initialData, members, isPending, onSubmit 
 
             <label >Expense Name
                 <input
-                    type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     required
@@ -57,7 +56,6 @@ export default function ExpenseForm({ initialData, members, isPending, onSubmit 
 
             <label >Expense Description
                 <input
-                    type="text"
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                 />
@@ -65,7 +63,6 @@ export default function ExpenseForm({ initialData, members, isPending, onSubmit 
 
             <label >Expense Amount
                 <input
-                    type="text"
                     value={baseAmount}
                     onChange={(e) => setBaseAmount(e.target.value)}
                     required
@@ -109,7 +106,6 @@ export default function ExpenseForm({ initialData, members, isPending, onSubmit 
             {taxType &&
                 <label >Tax Amount
                     <input
-                        type="text"
                         value={taxAmount}
                         onChange={(e) => setTaxAmount(e.target.value)}
                         required
@@ -129,7 +125,6 @@ export default function ExpenseForm({ initialData, members, isPending, onSubmit 
             {tipType &&
                 <label >Tip Amount
                     <input
-                        type="text"
                         value={tipAmount}
                         onChange={(e) => setTipAmount(e.target.value)}
                         required
