@@ -44,7 +44,8 @@ function GroupDetailCore({ groupId }: { groupId: string }) {
         </div>
       )}
 
-      {activeTab === 'balances' && <p>Balances view coming soon</p>}
+      {activeTab === 'balances' &&
+        }
 
       {activeTab === 'members' && (
         <div>

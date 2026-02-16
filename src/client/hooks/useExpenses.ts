@@ -37,7 +37,7 @@ export function useCreateExpense(groupId: string) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['expenses', groupId] });
-      queryClient.invalidateQueries({ queryKey: ['balances', groupId] });
+      queryClient.invalidateQueries({ queryKey: [groupId] });
     },
   });
 }
@@ -52,7 +52,7 @@ export function useUpdateExpense(groupId: string, expenseId: string) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['expenses', groupId] });
-      queryClient.invalidateQueries({ queryKey: ['balances', groupId] });
+      queryClient.invalidateQueries({ queryKey: [groupId] });
     },
   });
 }
@@ -64,7 +64,7 @@ export function useDeleteExpense(groupId: string) {
     mutationFn: (expenseId: string) => api.delete(`/groups/${groupId}/expenses/${expenseId}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['expenses', groupId] });
-      queryClient.invalidateQueries({ queryKey: ['balances', groupId] });
+      queryClient.invalidateQueries({ queryKey: [groupId] });
     },
   });
 }
