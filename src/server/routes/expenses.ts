@@ -292,6 +292,10 @@ router.get(
 /**
  * PATCH /api/groups/:groupId/expenses/:expenseId
  * Update an expense
+ * TODO: Change to PUT with CreateExpenseInput — the form always sends all fields,
+ * and zod refinements need all fields present to validate. Partial updates (PATCH) add
+ * complexity without real benefit here. Delete the update versions of the create expense schema
+ * then both the create and put can just use the same schema
  */
 router.patch(
   '/:groupId/expenses/:expenseId',
