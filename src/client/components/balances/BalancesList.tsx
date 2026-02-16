@@ -5,6 +5,7 @@ import { Loading } from "../layout/Loading";
 import { calculateNetBalances } from "@/shared/utils/calculations";
 import { formatCurrency } from "@/shared/utils/currency";
 import { Link } from "react-router-dom";
+import { addQueryParams } from "@/client/lib/utils";
 
 
 export function BalancesList({ groupId, members }: { groupId: string; members: Group['members'] }) {
@@ -26,7 +27,7 @@ export function BalancesList({ groupId, members }: { groupId: string; members: G
                 Array.from(owerMap).map(([owerId, amount]) =>
                     <li key={`${owedId}-${owerId}`}>
                         {memberIdToName.get(owedId) || "ERROR"} is owed {formatCurrency(amount)} by {memberIdToName.get(owerId) || "ERROR"}
-                        <Link to={`/groups/${groupId}/settlements/new?from=${owerId}&to=${owedId}&amount=${amount}`}>
+                        <Link to={addQueryParams(`/groups/${groupId}/settlements/new`, { from: owerId, to: owedId, amount })}>
                             Settle Up
                         </Link>
                     </li>
