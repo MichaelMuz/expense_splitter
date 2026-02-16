@@ -3,16 +3,18 @@ import { useGroup } from '../hooks/useGroups';
 import { Layout } from '../components/layout/Layout';
 import { Loading } from '../components/layout/Loading';
 import ExpenseForm from '../components/expenses/ExpenseForm';
-import { useCreateExpense } from '../hooks/useExpenses';
-import type { CreateExpenseInput } from '@/shared/schemas/expense';
+import { useCreateExpense, useExpense, useUpdateExpense } from '../hooks/useExpenses';
+import type { CreateExpenseInput, Expense, UpdateExpenseInput } from '@/shared/schemas/expense';
+import type { UseMutationResult } from '@tanstack/react-query';
 
-function AddExpenseCore({ groupId }: { groupId: string }) {
+type ExpenseInput<E extends Expense | undefined> = E extends Expense ? UpdateExpenseInput : CreateExpenseInput;
+
+function AddExpenseCore<E extends Expense | undefined>({ groupId, initialData, mutation }: { groupId: string; initialData?: E; mutation: UseMutationResult<Expense, Error, ExpenseInput<E>> }) {
   const navigate = useNavigate();
   const { data: group, isLoading } = useGroup(groupId);
-  const createExpense = useCreateExpense(groupId)
 
-  const onSubmit = (expense: CreateExpenseInput) => {
-    createExpense.mutate(expense, { onSuccess: () => navigate(`/groups/${groupId}`) })
+  const onSubmit = (expense: ExpenseInput<E>) => {
+    mutation.mutate(expense, { onSuccess: () => navigate(`/groups/${groupId}`) })
   }
 
   if (isLoading) return <Loading name="group" />;
@@ -20,18 +22,35 @@ function AddExpenseCore({ groupId }: { groupId: string }) {
 
   return (
     <Layout>
-      {createExpense.isError && <p>{createExpense.error.message}</p>}
+      {mutation.isError && <p>{mutation.error.message}</p>}
       <button onClick={() => navigate(`/groups/${groupId}`)}>Back</button>
-      <h1>Add Expense to {group.name}</h1>
-      <ExpenseForm members={group.members} isPending={createExpense.isPending} onSubmit={onSubmit} />
+      <h1>{initialData ? 'Edit' : 'Add'} Expense to {group.name}</h1>
+      <ExpenseForm initialData={initialData} members={group.members} isPending={mutation.isPending} onSubmit={onSubmit} />
     </Layout>
   );
 
 }
 
+function EditExpense({ groupId, expenseId }: { groupId: string, expenseId: string }) {
+  const expense = useExpense(groupId, expenseId)
+  const updateExpense = useUpdateExpense(groupId, expenseId)
+
+  if (expense.isLoading) return <Loading name="expense" />
+  else if (expense.isError || !expense.data) return <p>Error loading expense {expense.error?.message || ""}</p>
+
+  return <AddExpenseCore groupId={groupId} initialData={expense.data} mutation={updateExpense} />
+
+}
+
+function CreateExpense({ groupId }: { groupId: string }) {
+  const createExpense = useCreateExpense(groupId)
+  return <AddExpenseCore groupId={groupId} mutation={createExpense} initialData={undefined} />
+}
+
 export default function AddExpensePage() {
   const { groupId } = useParams<{ groupId: string }>();
+  const { expenseId } = useParams<{ expenseId: string }>();
 
   if (!groupId) return <Navigate to="/groups" replace />;
-  return <AddExpenseCore groupId={groupId} />
+  return expenseId ? <EditExpense groupId={groupId} expenseId={expenseId} /> : <CreateExpense groupId={groupId} />
 }
