@@ -5,8 +5,7 @@
 
 import type { TaxTipType } from '@prisma/client';
 import type { ExpenseData, PayerInput, OwerInput, Expense } from '../schemas/expense';
-import { assertUnreachable } from './type-helpers';
-import assert from 'assert';
+import { assertUnreachable, assert } from './type-helpers';
 import type { Settlement } from '../schemas/settlement';
 
 /**
