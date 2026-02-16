@@ -32,6 +32,12 @@ Pain points with current stack and possible alternatives to explore.
 - **Drizzle** - Query builder, closer to SQL, `.returning()` works everywhere
 - **Kysely** - Type-safe SQL query builder, very flexible
 
+### Frontend Routing
+
+- **Hand-built URL strings are error-prone**: No compile-time checks that path params or search params are correct. Easy to typo `/groups/${groupId}/settlements/new?from=${id}&to=${id}&amount=${amount}`.
+- Short-term: write a helper for building URLs with query params
+- Long-term: **TanStack Router** - fully type-safe routing, params validated at compile time, search params with schemas
+
 ### Form Handling
 
 - **React Hook Form** + `@hookform/resolvers/zod` - Pass your Zod schema to the form library and it handles validation automatically. Per-field error messages derived from Zod schema definitions. Same schemas the server uses, one source of truth. Replaces hand-written validation logic in form components.
