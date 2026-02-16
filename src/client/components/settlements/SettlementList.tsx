@@ -21,7 +21,7 @@ export function SettlementList({ groupId }: { groupId: string }) {
         <ul>
             {settlements.map((settlement) => (
                 <li key={settlement.id}>
-                    {settlement.from.name} to {settlement.to.name} — {formatCurrency(settlement.amount)}
+                    {settlement.fromMember.name} to {settlement.toMember.name} — {formatCurrency(settlement.amount)}
                     {' '}
                     <button onClick={() => handleDelete(settlement.id)}>Delete</button>
                 </li>

@@ -32,34 +32,26 @@ const settlementMemberSchema = z.object({
   userId: z.string().uuid().nullable(),
 });
 
-const settlementMemberSummarySchema = z.object({
-  id: z.string().uuid(),
-  name: z.string(),
-});
-
-const settlementBaseSchema = z.object({
+export const settlementSchema = z.object({
   id: z.string().uuid(),
   groupId: z.string().uuid(),
   amount: z.number().int(),
   paidAt: z.coerce.date(),
   recordedBy: z.string().uuid(),
+  fromGroupMemberId: z.string().uuid(),
+  toGroupMemberId: z.string().uuid(),
+  fromMember: settlementMemberSchema,
+  toMember: settlementMemberSchema,
 });
 
 export const settlementResponseSchema = z.object({
-  settlement: settlementBaseSchema.extend({
-    fromGroupMemberId: z.string().uuid(),
-    toGroupMemberId: z.string().uuid(),
-    fromMember: settlementMemberSchema,
-    toMember: settlementMemberSchema,
-  }),
-});
+  settlement: settlementSchema,
+})
 
 export const settlementsResponseSchema = z.object({
-  settlements: z.array(settlementBaseSchema.extend({
-    from: settlementMemberSummarySchema,
-    to: settlementMemberSummarySchema,
-  })),
+  settlements: z.array(settlementSchema)
 });
 
+export type Settlement = z.infer<typeof settlementSchema>;
 export type SettlementResponse = z.infer<typeof settlementResponseSchema>;
 export type SettlementsResponse = z.infer<typeof settlementsResponseSchema>;

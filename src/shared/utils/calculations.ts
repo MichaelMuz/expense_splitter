@@ -4,9 +4,10 @@
  */
 
 import type { TaxTipType } from '@prisma/client';
-import type { ExpenseData, PayerInput, OwerInput } from '../schemas/expense';
+import type { ExpenseData, PayerInput, OwerInput, Expense } from '../schemas/expense';
 import { assertUnreachable } from './type-helpers';
 import assert from 'assert';
+import type { Settlement } from '../schemas/settlement';
 
 /**
  * Calculate the total expense amount including tax and tip
@@ -133,7 +134,7 @@ export function calculateOwerAmounts(
     owers.map((o) => [
       o.groupMemberId,
       (baseAmounts.get(o.groupMemberId) || 0) +
-        (taxTipAmounts.get(o.groupMemberId) || 0),
+      (taxTipAmounts.get(o.groupMemberId) || 0),
     ])
   );
 }
@@ -146,16 +147,8 @@ export function calculateOwerAmounts(
  * TODO: I should make a an explicit money type that is in cents
  */
 export function calculateNetBalances(
-  expenses: Array<{
-    expense: ExpenseData;
-    payers: PayerInput[];
-    owers: OwerInput[];
-  }>,
-  settlements: Array<{
-    fromGroupMemberId: string;
-    toGroupMemberId: string;
-    amount: number;
-  }>
+  expenses: Expense[],
+  settlements: Settlement[],
 ): Map<string, Map<string, number>> {
   const owedToOwerToAmount = new Map<string, Map<string, number>>();
 
@@ -178,9 +171,9 @@ export function calculateNetBalances(
   };
 
   // Process each expense
-  expenses.forEach(({ expense, payers, owers }) => {
-    const pToPaid = calculatePayerAmounts(expense, payers);
-    const pToOwes = calculateOwerAmounts(expense, owers);
+  expenses.forEach(expense => {
+    const pToPaid = calculatePayerAmounts(expense, expense.payers);
+    const pToOwes = calculateOwerAmounts(expense, expense.owers);
 
     // Simplify members that both paid and partook
     new Set(pToPaid.keys()).intersection(new Set(pToOwes)).forEach((mId) => {
@@ -223,7 +216,7 @@ export function calculateNetBalances(
   });
 
   // Apply settlements (reduce debts)
-  settlements.forEach((settlement) => {
+  settlements.forEach(settlement => {
     addToMapUnlessZero(
       settlement.toGroupMemberId,
       settlement.fromGroupMemberId,

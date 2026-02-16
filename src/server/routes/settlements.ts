@@ -120,23 +120,7 @@ router.get(
         orderBy: { paidAt: 'desc' },
       });
 
-      const formattedSettlements = settlements.map((s) => ({
-        id: s.id,
-        groupId: s.groupId,
-        from: {
-          id: s.fromMember.id,
-          name: s.fromMember.name,
-        },
-        to: {
-          id: s.toMember.id,
-          name: s.toMember.name,
-        },
-        amount: s.amount,
-        paidAt: s.paidAt,
-        recordedBy: s.recordedBy,
-      }));
-
-      const responseData: SettlementsResponse = { settlements: formattedSettlements };
+      const responseData: SettlementsResponse = { settlements };
       res.json(responseData);
     } catch (error) {
       next(error);
