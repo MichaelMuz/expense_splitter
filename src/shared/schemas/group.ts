@@ -7,6 +7,8 @@ import { z } from 'zod';
 export const createGroupSchema = z.object({
   name: z
     .string()
+    //TODO: add trime to basically every string, we rarely basically never want pure whitespace
+    .trim()
     .min(1, 'Group name is required')
     .max(100, 'Group name must be less than 100 characters'),
 });
