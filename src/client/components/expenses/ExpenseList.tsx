@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { formatCurrency } from '../../../shared/utils/currency';
 import { useExpenses, useDeleteExpense } from '../../hooks/useExpenses';
 import { Loading } from '../layout/Loading';
@@ -23,8 +24,10 @@ export function ExpenseList({ groupId }: { groupId: string }) {
           {expense.name} — {formatCurrency(expense.totalAmount)}
           {' '}
           <button onClick={() => handleDelete(expense.id)}>Delete</button>
+          {' '}
+          <Link to={`/groups/${groupId}/expenses/${expense.id}/edit`} >Edit</Link>
         </li>
-      ))}
-    </ul>
-  );
+      ))
+      }
+    </ul >);
 }
