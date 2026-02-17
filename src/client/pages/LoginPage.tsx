@@ -1,34 +1,37 @@
-import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { Layout } from '../components/layout/Layout';
 
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { loginSchema, type LoginInput } from '@/shared/schemas/auth';
+
 export default function LoginPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const { loginMutation } = useAuth();
   const navigate = useNavigate();
+  const { register, handleSubmit, formState: { errors } } = useForm<LoginInput>({
+    resolver: zodResolver(loginSchema)
+  })
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    loginMutation.mutate({ email, password }, {
-      onSuccess: () => navigate('/groups'),
-    });
+  const onSubmit = (data: LoginInput) => {
+    loginMutation.mutate(data, { onSuccess: () => navigate('/groups') });
   };
 
   return (
     <Layout>
       <h1>Login</h1>
       {loginMutation.isError && <p>{loginMutation.error.message}</p>}
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit(onSubmit)}>
         <div>
           <label>Email
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+            <input type="email" {...register("email")} />
+            {errors.email && <p>{errors.email.message}</p>}
           </label>
         </div>
         <div>
           <label>Password
-            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+            <input type="password" {...register("password")} />
+            {errors.password && <p>{errors.password.message}</p>}
           </label>
         </div>
         <button type="submit" disabled={loginMutation.isPending}>
