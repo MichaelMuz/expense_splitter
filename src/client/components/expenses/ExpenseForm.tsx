@@ -1,9 +1,37 @@
-import { $Enums, SplitMethod } from '@prisma/client';
+import { $Enums, SplitMethod, TaxTipType } from '@prisma/client';
 import type { CreateExpenseInput, Expense } from "@/shared/schemas/expense";
 import { useState } from "react";
 import type { Group } from "@/shared/schemas/group";
 import { toCents, toDollars } from "@/shared/utils/currency";
 import { assertUnreachable } from '@/shared/utils/type-helpers';
+
+function toBackend(type: TaxTipType, value: string): number {
+    switch (type) {
+        case "FIXED": return toCents(parseFloat(value));
+        case "PERCENTAGE": return parseFloat(value) * 100;
+        default: assertUnreachable(type);
+    }
+}
+function toDisplay(type: TaxTipType, value: number): string {
+    switch (type) {
+        case "FIXED": return toDollars(value).toString();
+        case "PERCENTAGE": return (value / 100).toString();
+        default: assertUnreachable(type);
+    }
+}
+const splitValuetoBackend = (splitMethod: SplitMethod, value: string): { splitMethod: SplitMethod, splitValue: number | null } => (
+    {
+        splitMethod, splitValue: splitMethod === "EVEN" ? null : toBackend(splitMethod, value)
+    }
+);
+function splitValuetoDisplay(type: SplitMethod, value: number | undefined | null): string {
+    if (value == null || type == "EVEN") {
+        return ""
+    } else {
+        return toDisplay(type, value)
+    }
+}
+
 
 export default function ExpenseForm({ initialData, members, isPending, onSubmit }: { initialData?: Expense; members: Group['members']; isPending: boolean; onSubmit: (data: CreateExpenseInput) => void }) {
     const [name, setName] = useState(initialData?.name || "");
@@ -12,63 +40,47 @@ export default function ExpenseForm({ initialData, members, isPending, onSubmit 
     const [payerSplitType, setPayerSplitType] = useState(initialData?.payers[0]?.splitMethod || $Enums.SplitMethod.EVEN);
     const [payerIds, setPayerIds] = useState(initialData?.payers.map(p => p.groupMemberId) || []);
     const [payerIdToAmount, setPayerIdToAmount] = useState(
-        Object.fromEntries(initialData?.payers.map(p => [p.groupMemberId, String(p.splitValue ?? "")]) ?? [])
+        Object.fromEntries(initialData?.payers.map(p => [p.groupMemberId, splitValuetoDisplay(payerSplitType, p.splitValue)]) ?? [])
     );
 
     const [owerSplitType, setOwerSplitType] = useState(initialData?.owers[0]?.splitMethod || $Enums.SplitMethod.EVEN);
     const [owerIds, setOwerIds] = useState(initialData?.owers.map(p => p.groupMemberId) || []);
     const [owerIdToAmount, setOwerIdToAmount] = useState(
-        Object.fromEntries(initialData?.owers.map(o => [o.groupMemberId, String(o.splitValue ?? "")]) ?? [])
+        Object.fromEntries(initialData?.owers.map(o => [o.groupMemberId, splitValuetoDisplay(owerSplitType, o.splitValue)]) ?? [])
     );
 
-    const [baseAmount, setBaseAmount] = useState(initialData?.baseAmount ? toDollars(initialData?.baseAmount).toString() : "");
+    const [baseAmount, setBaseAmount] = useState(initialData?.baseAmount ? toDisplay("FIXED", initialData?.baseAmount) : "");
 
-    const [taxAmount, setTaxAmount] = useState(initialData?.taxAmount ? toDollars(initialData?.taxAmount).toString() : "");
     const [taxType, setTaxType] = useState(initialData?.taxType || null);
+    const [taxAmount, setTaxAmount] = useState(taxType && initialData?.taxAmount ? toDisplay(taxType, initialData?.taxAmount) : "");
 
-    const [tipAmount, setTipAmount] = useState(initialData?.tipAmount ? toDollars(initialData?.tipAmount).toString() : "");
     const [tipType, setTipType] = useState(initialData?.tipType || null);
+    const [tipAmount, setTipAmount] = useState(tipType && initialData?.tipAmount ? toDisplay(tipType, initialData?.tipAmount) : "");
 
 
     const handleSubmit = (e: React.FormEvent) => {
         const taxTypeAmount = taxType ? {
-            taxType, taxAmount: toCents(parseFloat(taxAmount))
+            taxType, taxAmount: toBackend(taxType, taxAmount)
         } : {};
         const tipTypeAmount = tipType ? {
-            tipType, tipAmount: toCents(parseFloat(tipAmount))
+            tipType, tipAmount: toBackend(tipType, tipAmount)
         } : {};
-        const getMethodAndValue = (splitMethod: SplitMethod, value: string): { splitMethod: SplitMethod, splitValue: number | null } => (
-            {
-                splitMethod, splitValue: (() => {
-                    switch (splitMethod) {
-                        case 'EVEN':
-                            return null
-                        case 'FIXED':
-                            return toCents(parseFloat(value))
-                        case 'PERCENTAGE':
-                            return parseFloat(value) * 100
-                        default:
-                            assertUnreachable(splitMethod)
-                    }
-                })()
-            }
-        );
 
 
         e.preventDefault();
         onSubmit({
             name,
             description,
-            baseAmount: toCents(parseFloat(baseAmount)),
+            baseAmount: toBackend("FIXED", baseAmount),
             ...taxTypeAmount,
             ...tipTypeAmount,
             payers: payerIds.map(id => ({
                 groupMemberId: id,
-                ...getMethodAndValue(payerSplitType, payerIdToAmount[id] || "0")
+                ...splitValuetoBackend(payerSplitType, payerIdToAmount[id] || "0")
             })),
             owers: owerIds.map(id => ({
                 groupMemberId: id,
-                ...getMethodAndValue(owerSplitType, owerIdToAmount[id] || "0")
+                ...splitValuetoBackend(owerSplitType, owerIdToAmount[id] || "0")
             })),
         })
     }
