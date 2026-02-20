@@ -17,6 +17,7 @@ function GroupDetailCore({ groupId }: { groupId: string }) {
   if (isLoading) return <Loading name='group' />
   if (error || !group) return <Layout><p>Failed to load group.</p></Layout>;
 
+  const inviteUrl = `${window.location.origin}/groups/join/${group.inviteCode}`
   return (
     <Layout>
       <h1>{group.name}</h1>
@@ -51,7 +52,8 @@ function GroupDetailCore({ groupId }: { groupId: string }) {
       {activeTab === 'members' && (
         <div>
           <h2>Members</h2>
-          <p>Invite code: {group.inviteCode}</p>
+          <p>Invite code: {inviteUrl}</p>
+          <button onClick={() => navigator.clipboard.writeText(inviteUrl)}></button>
           <ul>
             {group.members.map((m) => (
               <li key={m.id}>

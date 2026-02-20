@@ -10,8 +10,6 @@ export default function GroupsPage() {
       <h1>My Groups</h1>
       <nav>
         <Link to="/groups/create">Create Group</Link>
-        {' | '}
-        <Link to="/groups/join">Join Group</Link>
       </nav>
 
       {isLoading && <p>Loading groups...</p>}

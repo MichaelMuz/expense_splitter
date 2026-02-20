@@ -42,6 +42,10 @@ Pain points with current stack and possible alternatives to explore.
 
 - **React Hook Form** + `@hookform/resolvers/zod` - Pass your Zod schema to the form library and it handles validation automatically. Per-field error messages derived from Zod schema definitions. Same schemas the server uses, one source of truth. Replaces hand-written validation logic in form components.
 
+## Polish TODOs
+
+- **Invite link redirect after login**: If a logged-out user clicks an invite link (`/join/:inviteCode`), they get redirected to login and lose the invite URL. Fix: pass the invite URL as a query param to login (`/login?redirect=/join/abc-123`), then navigate to it after successful login.
+
 ## Non-Committal Notes
 
 Just tracking frustrations for future reference. Current stack works fine for MVP. Consider trying on next project.

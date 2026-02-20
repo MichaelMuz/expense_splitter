@@ -62,13 +62,27 @@ export function useCreateGroup() {
 }
 
 /**
+ * Fetch all group info from invite code and start virtual person claiming workflow
+ */
+export function usePreviewGroup(inviteCode: string) {
+  return useQuery({
+    queryKey: ['group-preview', inviteCode],
+    queryFn: async () => {
+      const response = await api.get(`/groups/join/${inviteCode}`);
+      const validated = groupResponseSchema.parse(response.data);
+      return validated.group;
+    }
+  })
+}
+
+/**
  * Join a group using invite code
  */
 export function useJoinGroup() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({inviteCode, joinInput}:{inviteCode: string, joinInput: JoinInviteInput}) => {
+    mutationFn: async ({ inviteCode, joinInput }: { inviteCode: string, joinInput: JoinInviteInput }) => {
       const response = await api.post(`/groups/join/${inviteCode}`, joinInput);
       const validated = joinGroupResponseSchema.parse(response.data);
       return validated;

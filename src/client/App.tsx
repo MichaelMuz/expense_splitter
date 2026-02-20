@@ -40,7 +40,7 @@ function App() {
             }
           />
           <Route
-            path="/groups/join"
+            path="/groups/join/:inviteCode"
             element={
               <ProtectedRoute>
                 <JoinGroupPage />
