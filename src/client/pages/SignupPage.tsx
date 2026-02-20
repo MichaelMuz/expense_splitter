@@ -13,12 +13,12 @@ const signupFormSchema = signupSchema.extend({
 type SignupForm = z.infer<typeof signupFormSchema>;
 
 export default function SignupPage() {
+  const navigate = useNavigate();
   const { signupMutation } = useAuth();
 
   const { register, handleSubmit, formState: { errors } } = useForm<SignupForm>({
     resolver: zodResolver(signupFormSchema)
   })
-  const navigate = useNavigate();
 
   const onSubmit = (data: SignupForm) => {
     const { confirmPassword, ...signupData } = data;
