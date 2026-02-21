@@ -4,42 +4,24 @@
 
 import { z } from 'zod';
 import { money } from './fields';
-import { tuple } from '../utils/type-helpers';
-import { toCents } from '../utils/currency';
 
 export const settlementParamsSchema = z.object({
   groupId: z.string().uuid('Invalid group ID'),
   settlementId: z.string().uuid('Invalid settlement ID'),
 });
 
-export const toFromMemberSettlementSchema = z
+export const createSettlementSchema = z
   .object({
     fromGroupMemberId: z.string().uuid('Invalid from member ID'),
     toGroupMemberId: z.string().uuid('Invalid to member ID'),
-  });
-
-const toFromRefinement = tuple(
-  (data: z.infer<typeof toFromMemberSettlementSchema>) => data.fromGroupMemberId !== data.toGroupMemberId,
-  { message: 'Cannot settle payment to yourself', path: ['toGroupMemberId'] }
-);
-
-export const createSettlementSchema = toFromMemberSettlementSchema
-  .extend({
     amount: money,
   }).refine(
-    ...toFromRefinement
-  );
-
-export const createSettlementFormSchema = toFromMemberSettlementSchema
-  .extend({
-    amount: z.coerce.number().transform(toCents).pipe(money),
-  }).refine(
-    ...toFromRefinement
+    data => data.fromGroupMemberId !== data.toGroupMemberId,
+    { message: 'Cannot settle payment to yourself', path: ['toGroupMemberId'] }
   );
 
 export type SettlementParams = z.infer<typeof settlementParamsSchema>;
 export type CreateSettlementInput = z.infer<typeof createSettlementSchema>;
-export type CreateSettlementFormInput = z.infer<typeof createSettlementFormSchema>;
 
 const settlementMemberSchema = z.object({
   id: z.string().uuid(),

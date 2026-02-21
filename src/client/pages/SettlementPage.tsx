@@ -3,8 +3,8 @@ import { useGroup } from '../hooks/useGroups';
 import { Layout } from '../components/layout/Layout';
 import { Loading } from '../components/layout/Loading';
 import { useCreateSettlement } from '../hooks/useSettlements';
-import { toDollars } from '@/shared/utils/currency';
-import { createSettlementFormSchema, type CreateSettlementFormInput} from '@/shared/schemas/settlement';
+import { toCents, toDollars } from '@/shared/utils/currency';
+import { createSettlementSchema, type CreateSettlementInput } from '@/shared/schemas/settlement';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import type { Group } from '@/shared/schemas/group';
@@ -19,8 +19,8 @@ function SettlementPageCore({ group }: { group: Group }) {
   const initialFromMemberId = searchParams.get("from") ?? undefined
   const initialToMemberId = searchParams.get("to") ?? undefined
 
-  const { register, handleSubmit, watch, formState: { errors } } = useForm<CreateSettlementFormInput>({
-    resolver: zodResolver(createSettlementFormSchema),
+  const { register, handleSubmit, watch, formState: { errors } } = useForm<CreateSettlementInput>({
+    resolver: zodResolver(createSettlementSchema),
     defaultValues: {
       fromGroupMemberId: group.members.find(m => m.id === initialFromMemberId)?.id ?? undefined,
       toGroupMemberId: group.members.find(m => m.id === initialToMemberId)?.id ?? undefined,
@@ -28,8 +28,8 @@ function SettlementPageCore({ group }: { group: Group }) {
     }
   });
 
-  const onSubmit = (data: CreateSettlementFormInput) => {
-    createSettlement.mutate( data, { onSuccess: () => navigate(`/groups/${group.id}`) })
+  const onSubmit = (data: CreateSettlementInput) => {
+    createSettlement.mutate(data, { onSuccess: () => navigate(`/groups/${group.id}`) })
   }
 
   return (
@@ -49,7 +49,7 @@ function SettlementPageCore({ group }: { group: Group }) {
         </select>
         {errors.fromGroupMemberId?.message}
 
-        <input placeholder="0.00" {...register("amount")} />
+        <input placeholder="0.00" {...register("amount", { setValueAs: v => toCents(parseFloat(v)) })} />
         {errors.amount?.message}
 
         <select {...register("toGroupMemberId")}>
