@@ -72,7 +72,7 @@ model Expense {
   id          String   @id @default(uuid())
   groupId     String
   name        String
-  description String   @default("")
+  description String?
 
   // Base amount (pre-tax/tip) in CENTS - REQUIRED
   baseAmount Int

@@ -4,16 +4,14 @@ import { Layout } from '../components/layout/Layout';
 import { Loading } from '../components/layout/Loading';
 import ExpenseForm from '../components/expenses/ExpenseForm';
 import { useCreateExpense, useExpense, useUpdateExpense } from '../hooks/useExpenses';
-import type { CreateExpenseInput, Expense, UpdateExpenseInput } from '@/shared/schemas/expense';
+import type { CreateExpenseInput, Expense } from '@/shared/schemas/expense';
 import type { UseMutationResult } from '@tanstack/react-query';
 
-type ExpenseInput<E extends Expense | undefined> = E extends Expense ? UpdateExpenseInput : CreateExpenseInput;
-
-function AddExpenseCore<E extends Expense | undefined>({ groupId, initialData, mutation }: { groupId: string; initialData?: E; mutation: UseMutationResult<Expense, Error, ExpenseInput<E>> }) {
+function AddExpenseCore({ groupId, initialData, mutation }: { groupId: string; initialData?: Expense; mutation: UseMutationResult<Expense, Error, CreateExpenseInput> }) {
   const navigate = useNavigate();
   const { data: group, isLoading } = useGroup(groupId);
 
-  const onSubmit = (expense: ExpenseInput<E>) => {
+  const onSubmit = (expense: CreateExpenseInput) => {
     mutation.mutate(expense, { onSuccess: () => navigate(`/groups/${groupId}`) })
   }
 
@@ -44,7 +42,7 @@ function EditExpense({ groupId, expenseId }: { groupId: string, expenseId: strin
 
 function CreateExpense({ groupId }: { groupId: string }) {
   const createExpense = useCreateExpense(groupId)
-  return <AddExpenseCore groupId={groupId} mutation={createExpense} initialData={undefined} />
+  return <AddExpenseCore groupId={groupId} mutation={createExpense} />
 }
 
 export default function AddExpensePage() {

@@ -104,7 +104,6 @@ Goal: every feature functions with bare HTML forms. No styling. Just data flowin
 
 **What to build**: When clicking an expense in the list, navigate to the edit page. `AddExpensePage.tsx` already handles both create and edit routes — you just need to:
 - Pass `initialData` to your ExpenseForm when editing (the expense data from `useExpense`)
-- Use `useUpdateExpense` instead of `useCreateExpense`
 - Pre-populate all form fields from the existing expense
 
 **This is where your "store only atomic inputs" design pays off** — the edit form shows exactly what the user originally entered because that's what's in the database.

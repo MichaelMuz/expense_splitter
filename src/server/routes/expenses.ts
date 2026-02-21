@@ -15,23 +15,19 @@ import { authenticateToken } from '../middleware/auth';
 import { validateBody, validateParams } from '../middleware/validate';
 import {
   createExpenseSchema,
-  updateExpenseSchema,
   type CreateExpenseInput,
-  type UpdateExpenseInput,
   expenseParamsSchema,
   type ExpenseResponse,
   type ExpensesResponse,
+  type ExpenseData,
+  type PayerInput,
+  type OwerInput,
 } from '../../shared/schemas/expense';
 import {
   calculateTotalExpenseAmount,
   calculatePayerAmounts,
   calculateOwerAmounts,
 } from '../../shared/utils/calculations';
-import type {
-  ExpenseData,
-  PayerInput,
-  OwerInput,
-} from '../../shared/schemas/expense';
 import { Prisma } from '@prisma/client';
 import { groupIdParamSchema } from '@/shared/schemas/group';
 
@@ -131,12 +127,12 @@ async function checkOwersPayersGroupMembership(
   next: NextFunction
 ) {
   const groupId = req.params.groupId!; // Validated by middleware running before this
-  const owers = req.body.owers as UpdateExpenseInput['owers'];
-  const payers = req.body.payers as UpdateExpenseInput['payers'];
+  const owers = req.body.owers as CreateExpenseInput['owers'];
+  const payers = req.body.payers as CreateExpenseInput['payers'];
 
   const allMemberIds = [
-    ...(payers?.map((p) => p.groupMemberId) || []),
-    ...(owers?.map((o) => o.groupMemberId) || []),
+    ...payers.map((p) => p.groupMemberId),
+    ...owers.map((o) => o.groupMemberId),
   ];
   const uniqueMemberIds = [...new Set(allMemberIds)];
 
@@ -205,33 +201,15 @@ router.post(
   async (req, res, next) => {
     try {
       const groupId = req.params.groupId!; // Validated by middleware
-      const expenseData = req.body as CreateExpenseInput;
+      const { payers, owers, ...baseInfo } = req.body as CreateExpenseInput;
 
       // Create expense with payers and owers
       const expense = await prisma.expense.create({
         data: {
           groupId,
-          name: expenseData.name,
-          description: expenseData.description || '',
-          baseAmount: expenseData.baseAmount,
-          taxAmount: expenseData.taxAmount,
-          taxType: expenseData.taxType,
-          tipAmount: expenseData.tipAmount,
-          tipType: expenseData.tipType,
-          payers: {
-            create: expenseData.payers.map((p) => ({
-              groupMemberId: p.groupMemberId,
-              splitMethod: p.splitMethod,
-              splitValue: p.splitValue,
-            })),
-          },
-          owers: {
-            create: expenseData.owers.map((o) => ({
-              groupMemberId: o.groupMemberId,
-              splitMethod: o.splitMethod,
-              splitValue: o.splitValue,
-            })),
-          },
+          ...baseInfo,
+          payers: { create: payers },
+          owers: { create: owers },
         },
         ...expenseWithRelations,
       });
@@ -290,24 +268,20 @@ router.get(
 );
 
 /**
- * PATCH /api/groups/:groupId/expenses/:expenseId
+ * PUT /api/groups/:groupId/expenses/:expenseId
  * Update an expense
- * TODO: Change to PUT with CreateExpenseInput — the form always sends all fields,
- * and zod refinements need all fields present to validate. Partial updates (PATCH) add
- * complexity without real benefit here. Delete the update versions of the create expense schema
- * then both the create and put can just use the same schema
  */
-router.patch(
+router.put(
   '/:groupId/expenses/:expenseId',
   validateParams(expenseParamsSchema),
-  validateBody(updateExpenseSchema),
+  validateBody(createExpenseSchema),
   checkGroupMembership,
   checkOwersPayersGroupMembership,
   async (req, res, next) => {
     try {
       const groupId = req.params.groupId!; // Validated by middleware
       const expenseId = req.params.expenseId!; // Validated by middleware
-      const updateData = req.body as UpdateExpenseInput;
+      const { payers, owers, ...baseInfo } = req.body as CreateExpenseInput;
 
       // Verify expense exists
       const existingExpense = await prisma.expense.findFirst({
@@ -326,33 +300,9 @@ router.patch(
       const expense = await prisma.expense.update({
         where: { id: expenseId },
         data: {
-          name: updateData.name,
-          description: updateData.description,
-          baseAmount: updateData.baseAmount,
-          taxAmount: updateData.taxAmount,
-          taxType: updateData.taxType,
-          tipAmount: updateData.tipAmount,
-          tipType: updateData.tipType,
-          ...(updateData.payers && {
-            payers: {
-              deleteMany: {},
-              create: updateData.payers.map((p) => ({
-                groupMemberId: p.groupMemberId,
-                splitMethod: p.splitMethod,
-                splitValue: p.splitValue,
-              })),
-            },
-          }),
-          ...(updateData.owers && {
-            owers: {
-              deleteMany: {},
-              create: updateData.owers.map((o) => ({
-                groupMemberId: o.groupMemberId,
-                splitMethod: o.splitMethod,
-                splitValue: o.splitValue,
-              })),
-            },
-          }),
+          ...baseInfo,
+          payers: { deleteMany: {}, create: payers },
+          owers: { deleteMany: {}, create: owers },
         },
         ...expenseWithRelations,
       });

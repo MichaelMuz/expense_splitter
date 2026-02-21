@@ -1,7 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../lib/api';
-import type { CreateExpenseInput, UpdateExpenseInput } from '../../shared/schemas/expense';
-import { expenseResponseSchema, expensesResponseSchema, type Expense } from '../../shared/schemas/expense';
+import { expenseResponseSchema, expensesResponseSchema, type CreateExpenseInput} from '../../shared/schemas/expense';
 
 export function useExpenses(groupId: string) {
   return useQuery({
@@ -46,8 +45,8 @@ export function useUpdateExpense(groupId: string, expenseId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (input: UpdateExpenseInput) => {
-      const response = await api.patch(`/groups/${groupId}/expenses/${expenseId}`, input);
+    mutationFn: async (input: CreateExpenseInput) => {
+      const response = await api.put(`/groups/${groupId}/expenses/${expenseId}`, input);
       return expenseResponseSchema.parse(response.data).expense;
     },
     onSuccess: () => {
