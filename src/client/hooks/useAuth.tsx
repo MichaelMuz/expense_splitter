@@ -28,7 +28,7 @@ import {
 
 
 interface AuthContextValue {
-  user: User | null;
+  user: User | undefined;
   isLoading: boolean;
   isAuthenticated: boolean;
   loginMutation: UseMutationResult<AuthResponse, Error, LoginInput, unknown>;
@@ -56,7 +56,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
     },
     retry: false,
     enabled: !!getToken(),
-    initialData: null,
   });
 
   // Store the user in the query cache on login/signup as source of truth

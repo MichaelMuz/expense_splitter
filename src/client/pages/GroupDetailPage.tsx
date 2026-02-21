@@ -13,11 +13,19 @@ function GroupDetailCore({ groupId }: { groupId: string }) {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<Tab>('expenses');
   const { data: group, isLoading, error } = useGroup(groupId);
+  const [copied, setCopied] = useState(false);
+
 
   if (isLoading) return <Loading name='group' />
   if (error || !group) return <Layout><p>Failed to load group.</p></Layout>;
 
   const inviteUrl = `${window.location.origin}/groups/join/${group.inviteCode}`
+  const copyOnClick = () => {
+    navigator.clipboard.writeText(inviteUrl);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1000)
+  }
+
   return (
     <Layout>
       <h1>{group.name}</h1>
@@ -52,8 +60,8 @@ function GroupDetailCore({ groupId }: { groupId: string }) {
       {activeTab === 'members' && (
         <div>
           <h2>Members</h2>
-          <p>Invite code: {inviteUrl}</p>
-          <button onClick={() => navigator.clipboard.writeText(inviteUrl)}></button>
+          Invite code: {inviteUrl}
+          <button onClick={copyOnClick}>{copied ? "Copied" : "Copy"}</button>
           <ul>
             {group.members.map((m) => (
               <li key={m.id}>
