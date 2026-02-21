@@ -218,6 +218,7 @@ Goal: go from unstyled HTML to a polished app using shadcn components and Tailwi
 ### Step 14: Polish
 
 Ideas for when the core is done:
+- Add virtual member button on the members tab in GroupDetailPage — lets group owners add offline participants after group creation (currently members can only be added at expense time)
 - Empty states — friendly messages when there are no groups/expenses yet, with a call-to-action button
 - Confirmation dialogs — replace `window.confirm` for delete actions with shadcn `AlertDialog` (`npx shadcn@latest add alert-dialog`)
 - Toast notifications — shadcn has a `Sonner` integration for success/error toasts (`npx shadcn@latest add sonner`)

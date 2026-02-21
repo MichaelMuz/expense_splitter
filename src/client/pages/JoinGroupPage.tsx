@@ -39,7 +39,7 @@ function JoinGroupPageCore({ inviteCode, unclaimedMembers }: { inviteCode: strin
         <div>
           {type === "new" &&
             <label>Member Name
-              <input type="text" {...register("memberName")} />
+              <input {...register("memberName")} />
               {"memberName" in errors && errors.memberName?.message}
             </label>}
           {type === "claim" &&

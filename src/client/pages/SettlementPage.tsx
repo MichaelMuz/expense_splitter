@@ -3,65 +3,79 @@ import { useGroup } from '../hooks/useGroups';
 import { Layout } from '../components/layout/Layout';
 import { Loading } from '../components/layout/Loading';
 import { useCreateSettlement } from '../hooks/useSettlements';
-import { useState } from 'react';
-import { toCents, toDollars } from '@/shared/utils/currency';
+import { toDollars } from '@/shared/utils/currency';
+import { createSettlementFormSchema, type CreateSettlementFormInput} from '@/shared/schemas/settlement';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import type { Group } from '@/shared/schemas/group';
 
-function SettlementPageCore({ groupId }: { groupId: string }) {
+
+function SettlementPageCore({ group }: { group: Group }) {
   const navigate = useNavigate();
-  const { data: group, isLoading } = useGroup(groupId);
-  const createSettlement = useCreateSettlement(groupId);
+  const createSettlement = useCreateSettlement(group.id);
 
   const [searchParams] = useSearchParams();
   const initialAmount = searchParams.get("amount")
+  const initialFromMemberId = searchParams.get("from") ?? undefined
+  const initialToMemberId = searchParams.get("to") ?? undefined
 
-  const [fromGroupMemberId, setFromGroupMemberId] = useState(searchParams.get("from") || '');
-  const [toGroupMemberId, setToGroupMemberId] = useState(searchParams.get("to") || '');
-  const [amount, setAmount] = useState(initialAmount ? toDollars(parseFloat(initialAmount)).toString() : '');
+  const { register, handleSubmit, watch, formState: { errors } } = useForm<CreateSettlementFormInput>({
+    resolver: zodResolver(createSettlementFormSchema),
+    defaultValues: {
+      fromGroupMemberId: group.members.find(m => m.id === initialFromMemberId)?.id ?? undefined,
+      toGroupMemberId: group.members.find(m => m.id === initialToMemberId)?.id ?? undefined,
+      amount: initialAmount ? toDollars(parseFloat(initialAmount)) : undefined
+    }
+  });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    createSettlement.mutate({ fromGroupMemberId, toGroupMemberId, amount: toCents(parseFloat(amount)) }, {
-      onSuccess: () => navigate(`/groups/${groupId}`)
-    })
+  const onSubmit = (data: CreateSettlementFormInput) => {
+    createSettlement.mutate( data, { onSuccess: () => navigate(`/groups/${group.id}`) })
   }
-
-  if (isLoading) return <Loading name='group' />
-  if (!group) return <Layout><p>Group not found.</p></Layout>;
 
   return (
     <Layout>
       <h1>Record Settlement in {group.name}</h1>
-      <button onClick={() => navigate(`/groups/${groupId}`)}>Back</button>
+      <button onClick={() => navigate(`/groups/${group.id}`)}>Back</button>
 
       <p> {createSettlement.isError && createSettlement.error.message}</p>
 
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit(onSubmit)}>
 
-        <select value={fromGroupMemberId} onChange={e => setFromGroupMemberId(e.target.value)}>
-          <option value=''> Choose a sender </option>
+        <select {...register("fromGroupMemberId")}>
+          <option value={undefined}> Choose a sender </option>
           {group.members.map(m =>
             <option key={m.id} value={m.id}> {m.name} </option>
           )}
         </select>
+        {errors.fromGroupMemberId?.message}
 
-        <input type='number' placeholder="0.00" value={amount} onChange={e => setAmount(e.target.value)} />
+        <input placeholder="0.00" {...register("amount")} />
+        {errors.amount?.message}
 
-        <select value={toGroupMemberId} onChange={e => setToGroupMemberId(e.target.value)}>
-          <option value=''> Choose a receiver </option>
-          {group.members.filter(m => m.id !== fromGroupMemberId).map(m =>
+        <select {...register("toGroupMemberId")}>
+          <option value={undefined}> Choose a receiver </option>
+          {group.members.filter(m => m.id !== watch("fromGroupMemberId")).map(m =>
             <option key={m.id} value={m.id}> {m.name} </option>
           )}
         </select>
+        {errors.toGroupMemberId?.message}
 
-        <button type='submit' disabled={!fromGroupMemberId || !toGroupMemberId || !parseFloat(amount)}> Submit </button>
-      </form>
+        <button type='submit' disabled={createSettlement.isPending}> Submit </button>
+      </form >
 
-    </Layout>
+    </Layout >
   );
+}
+function SettlementPageGuard({ groupId }: { groupId: string }) {
+  const { data: group, isLoading } = useGroup(groupId);
+  if (isLoading) return <Loading name='group' />
+  if (!group) return <Layout><p>Group not found.</p></Layout>;
+  return <SettlementPageCore group={group} />
+
 }
 export default function SettlementPage() {
   const { groupId } = useParams<{ groupId: string }>();
 
   if (!groupId) return <Navigate to="/groups" replace />;
-  return <SettlementPageCore groupId={groupId} />
+  return <SettlementPageGuard groupId={groupId} />
 }
